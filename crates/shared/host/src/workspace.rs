@@ -36,7 +36,10 @@ pub struct GitState {
 
 impl GitState {
     pub fn conflicts(&self) -> usize {
-        self.status.iter().filter(|f| f.state == FileState::Conflicted).count()
+        self.status
+            .iter()
+            .filter(|f| f.state == FileState::Conflicted)
+            .count()
     }
 }
 
@@ -72,7 +75,9 @@ pub(crate) fn init(cx: &mut App) {
 
 /// Reads the repository containing `root` (blocking; run in the background).
 fn load_git(root: &Path) -> (Option<Repository>, Option<GitState>) {
-    let Some(repo) = Repository::discover(root) else { return (None, None) };
+    let Some(repo) = Repository::discover(root) else {
+        return (None, None);
+    };
     let state = GitState {
         root: repo.root().to_path_buf(),
         branch: repo.current_branch().ok().flatten(),
@@ -129,7 +134,10 @@ impl Workspace {
             .ok();
             self._watch_task = Some(cx.spawn(async move |this, cx| {
                 while let Some(changes) = rx.next().await {
-                    if this.update(cx, |workspace, cx| workspace.on_changes(changes, cx)).is_err() {
+                    if this
+                        .update(cx, |workspace, cx| workspace.on_changes(changes, cx))
+                        .is_err()
+                    {
                         break;
                     }
                 }
@@ -148,7 +156,10 @@ impl Workspace {
         let generation = self.generation;
         cx.spawn(async move |this, cx| {
             let path = dir.clone();
-            let result = cx.background_executor().spawn(async move { tree::list_dir(&path) }).await;
+            let result = cx
+                .background_executor()
+                .spawn(async move { tree::list_dir(&path) })
+                .await;
             let _ = this.update(cx, |workspace, cx| {
                 if workspace.generation != generation {
                     return;
@@ -166,10 +177,15 @@ impl Workspace {
 
     /// Re-reads git state in the background.
     pub fn refresh_git(&mut self, cx: &mut Context<Self>) {
-        let Some(root) = self.root.clone() else { return };
+        let Some(root) = self.root.clone() else {
+            return;
+        };
         let generation = self.generation;
         cx.spawn(async move |this, cx| {
-            let (repo, git) = cx.background_executor().spawn(async move { load_git(&root) }).await;
+            let (repo, git) = cx
+                .background_executor()
+                .spawn(async move { load_git(&root) })
+                .await;
             let _ = this.update(cx, |workspace, cx| {
                 if workspace.generation == generation {
                     workspace.repo = repo;
@@ -208,13 +224,20 @@ impl Workspace {
             return Task::ready(Err(GitError("This folder isn't a git repository.".into())));
         };
         cx.spawn(async move |this, cx| {
-            let result = cx.background_executor().spawn(async move { op(&repo) }).await;
+            let result = cx
+                .background_executor()
+                .spawn(async move { op(&repo) })
+                .await;
             let _ = this.update(cx, |workspace, cx| workspace.refresh_git(cx));
             result
         })
     }
 
-    pub fn switch_branch(&mut self, branch: String, cx: &mut Context<Self>) -> Task<Result<(), GitError>> {
+    pub fn switch_branch(
+        &mut self,
+        branch: String,
+        cx: &mut Context<Self>,
+    ) -> Task<Result<(), GitError>> {
         self.git_op(cx, move |repo| repo.switch(&branch))
     }
 
@@ -229,20 +252,41 @@ impl Workspace {
         self.git_op(cx, move |repo| repo.add_worktree(&path, &branch, &base))
     }
 
-    pub fn stage(&mut self, paths: Vec<String>, cx: &mut Context<Self>) -> Task<Result<(), GitError>> {
-        self.git_op(cx, move |repo| repo.stage(&paths.iter().map(String::as_str).collect::<Vec<_>>()))
+    pub fn stage(
+        &mut self,
+        paths: Vec<String>,
+        cx: &mut Context<Self>,
+    ) -> Task<Result<(), GitError>> {
+        self.git_op(cx, move |repo| {
+            repo.stage(&paths.iter().map(String::as_str).collect::<Vec<_>>())
+        })
     }
 
-    pub fn unstage(&mut self, paths: Vec<String>, cx: &mut Context<Self>) -> Task<Result<(), GitError>> {
-        self.git_op(cx, move |repo| repo.unstage(&paths.iter().map(String::as_str).collect::<Vec<_>>()))
+    pub fn unstage(
+        &mut self,
+        paths: Vec<String>,
+        cx: &mut Context<Self>,
+    ) -> Task<Result<(), GitError>> {
+        self.git_op(cx, move |repo| {
+            repo.unstage(&paths.iter().map(String::as_str).collect::<Vec<_>>())
+        })
     }
 
-    pub fn commit(&mut self, message: String, cx: &mut Context<Self>) -> Task<Result<(), GitError>> {
+    pub fn commit(
+        &mut self,
+        message: String,
+        cx: &mut Context<Self>,
+    ) -> Task<Result<(), GitError>> {
         self.git_op(cx, move |repo| repo.commit(&message))
     }
 
     /// Reads a file's text in the background.
-    pub fn read_file(&self, path: PathBuf, cx: &mut Context<Self>) -> Task<std::io::Result<String>> {
-        cx.background_executor().spawn(async move { std::fs::read_to_string(path) })
+    pub fn read_file(
+        &self,
+        path: PathBuf,
+        cx: &mut Context<Self>,
+    ) -> Task<std::io::Result<String>> {
+        cx.background_executor()
+            .spawn(async move { std::fs::read_to_string(path) })
     }
 }

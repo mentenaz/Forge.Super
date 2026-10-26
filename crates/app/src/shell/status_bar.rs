@@ -8,7 +8,9 @@
 //! The items themselves are in `status_items.rs`. Right-clicking a panel
 //! button moves that panel to another dock.
 
-use gpui::{AnyElement, Context, InteractiveElement, IntoElement, ParentElement, Styled, Window, div};
+use gpui::{
+    AnyElement, Context, InteractiveElement, IntoElement, ParentElement, Styled, Window, div,
+};
 use gpui_component::{
     ActiveTheme, Selectable, Sizable,
     button::{Button, ButtonVariants},
@@ -70,7 +72,8 @@ impl ForgeShell {
             }
         }
 
-        bar.right(Separator::vertical()).right(self.render_notification_button(cx))
+        bar.right(Separator::vertical())
+            .right(self.render_notification_button(cx))
     }
 
     fn panel_buttons(&self, position: DockPosition, cx: &mut Context<Self>) -> Vec<AnyElement> {
@@ -88,7 +91,9 @@ impl ForgeShell {
 
     fn panel_button(&self, id: &'static str, cx: &mut Context<Self>) -> AnyElement {
         let this = cx.weak_entity();
-        let Some(panel) = self.panel(id) else { return div().into_any_element() };
+        let Some(panel) = self.panel(id) else {
+            return div().into_any_element();
+        };
         let (current, title) = (panel.position, panel.info.title);
         let tooltip = panel.info.tooltip.unwrap_or(title);
 
@@ -111,7 +116,8 @@ impl ForgeShell {
                         PopupMenuItem::new(format!("Dock {}", position.title()))
                             .checked(position == current)
                             .on_click(move |_, _, cx| {
-                                this.update(cx, |this, cx| this.move_panel(id, position, cx)).ok();
+                                this.update(cx, |this, cx| this.move_panel(id, position, cx))
+                                    .ok();
                             }),
                     );
                 }
@@ -120,7 +126,11 @@ impl ForgeShell {
             .into_any_element()
     }
 
-    pub(super) fn status_text(&self, text: impl Into<gpui::SharedString>, cx: &mut Context<Self>) -> AnyElement {
+    pub(super) fn status_text(
+        &self,
+        text: impl Into<gpui::SharedString>,
+        cx: &mut Context<Self>,
+    ) -> AnyElement {
         div()
             .text_xs()
             .text_color(cx.theme().muted_foreground)

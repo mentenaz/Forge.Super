@@ -74,7 +74,11 @@ impl ShellStatus {
                 ("taplo", LspState::Running, None),
                 ("tombi", LspState::Running, None),
                 ("md-image-path-lsp", LspState::Running, None),
-                ("markdown-oxide", LspState::Warning, Some("2 links in forge-super-design.md could not be resolved.")),
+                (
+                    "markdown-oxide",
+                    LspState::Warning,
+                    Some("2 links in forge-super-design.md could not be resolved."),
+                ),
             ]
             .into_iter()
             .map(|(name, state, message)| LspStatus {
@@ -85,8 +89,20 @@ impl ShellStatus {
             .collect(),
             activity: Some("rust-analyzer: Indexing… 42%".into()),
             languages: [
-                "Bash", "C", "C++", "CSS", "Go", "JSON", "Markdown", "Plain Text", "Python", "Rust", "TOML",
-                "TSX", "TypeScript", "YAML",
+                "Bash",
+                "C",
+                "C++",
+                "CSS",
+                "Go",
+                "JSON",
+                "Markdown",
+                "Plain Text",
+                "Python",
+                "Rust",
+                "TOML",
+                "TSX",
+                "TypeScript",
+                "YAML",
             ]
             .into_iter()
             .map(Into::into)

@@ -20,7 +20,11 @@ pub enum DockPosition {
 }
 
 impl DockPosition {
-    pub const ALL: [DockPosition; 3] = [DockPosition::Left, DockPosition::Right, DockPosition::Bottom];
+    pub const ALL: [DockPosition; 3] = [
+        DockPosition::Left,
+        DockPosition::Right,
+        DockPosition::Bottom,
+    ];
 
     pub fn title(self) -> &'static str {
         match self {
@@ -89,6 +93,9 @@ pub fn register_panel(
 ) {
     let registry = cx.global_mut::<PanelRegistry>();
     if !registry.contains(info.id) {
-        registry.panels.push(RegisteredPanel { info, build: Rc::new(build) });
+        registry.panels.push(RegisteredPanel {
+            info,
+            build: Rc::new(build),
+        });
     }
 }

@@ -115,7 +115,10 @@ impl ForgeShell {
             .p_0()
             .child(self.render_notification_center(cx));
 
-        Badge::new().count(self.unread_notices()).max(99).child(popover)
+        Badge::new()
+            .count(self.unread_notices())
+            .max(99)
+            .child(popover)
     }
 
     fn render_notification_center(&self, cx: &mut Context<Self>) -> impl IntoElement {
@@ -176,7 +179,13 @@ impl ForgeShell {
                                 h_flex()
                                     .justify_between()
                                     .gap_2()
-                                    .child(div().text_sm().font_medium().truncate().child(notice.title.clone()))
+                                    .child(
+                                        div()
+                                            .text_sm()
+                                            .font_medium()
+                                            .truncate()
+                                            .child(notice.title.clone()),
+                                    )
                                     .child(
                                         div()
                                             .flex_shrink_0()

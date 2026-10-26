@@ -19,7 +19,10 @@ pub struct DirEntry {
 /// parent folders) and always hides `.git`. Hidden files are shown.
 pub fn list_dir(dir: &Path) -> io::Result<Vec<DirEntry>> {
     if !dir.is_dir() {
-        return Err(io::Error::new(io::ErrorKind::NotFound, format!("{} is not a folder", dir.display())));
+        return Err(io::Error::new(
+            io::ErrorKind::NotFound,
+            format!("{} is not a folder", dir.display()),
+        ));
     }
     let mut entries: Vec<DirEntry> = WalkBuilder::new(dir)
         .max_depth(Some(1))
@@ -64,7 +67,11 @@ mod tests {
         fs::write(root.join("A.toml"), "").unwrap();
         fs::write(root.join("debug.log"), "").unwrap();
 
-        let names: Vec<_> = list_dir(root).unwrap().into_iter().map(|e| (e.name, e.is_dir)).collect();
+        let names: Vec<_> = list_dir(root)
+            .unwrap()
+            .into_iter()
+            .map(|e| (e.name, e.is_dir))
+            .collect();
         assert_eq!(
             names,
             [
@@ -85,7 +92,11 @@ mod tests {
         fs::write(root.join("sub/keep.rs"), "").unwrap();
         fs::write(root.join("sub/drop.tmp"), "").unwrap();
 
-        let names: Vec<_> = list_dir(&root.join("sub")).unwrap().into_iter().map(|e| e.name).collect();
+        let names: Vec<_> = list_dir(&root.join("sub"))
+            .unwrap()
+            .into_iter()
+            .map(|e| e.name)
+            .collect();
         assert_eq!(names, ["keep.rs"]);
     }
 

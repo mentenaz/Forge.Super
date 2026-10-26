@@ -23,5 +23,7 @@ pub fn init(cx: &mut App) {
         default_dock: DockPosition::Right,
         order: 0,
     };
-    register_panel(cx, info, |window, cx| cx.new(|cx| GitPanel::new(window, cx)).into());
+    register_panel(cx, info, |window, cx| {
+        cx.new(|cx| GitPanel::new(window, cx)).into()
+    });
 }

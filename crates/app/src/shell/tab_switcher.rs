@@ -38,7 +38,12 @@ impl ForgeShell {
         self.last_seen_active_tab_id = current_id;
     }
 
-    fn advance_tab_switcher(&mut self, direction: isize, window: &mut Window, cx: &mut Context<Self>) {
+    fn advance_tab_switcher(
+        &mut self,
+        direction: isize,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
         let switcher = self.tab_switcher.get_or_insert_with(|| {
             let mut order: Vec<usize> = self.tab_mru.iter().copied().collect();
             for tab in &self.tabs {
@@ -46,7 +51,10 @@ impl ForgeShell {
                     order.push(tab.id);
                 }
             }
-            TabSwitcherState { order, selected_ix: 0 }
+            TabSwitcherState {
+                order,
+                selected_ix: 0,
+            }
         });
         if switcher.order.len() < 2 {
             self.tab_switcher = None;
@@ -65,24 +73,41 @@ impl ForgeShell {
         }));
     }
 
-    pub(super) fn on_action_cycle_tab_mru(&mut self, _: &CycleTabMru, window: &mut Window, cx: &mut Context<Self>) {
+    pub(super) fn on_action_cycle_tab_mru(
+        &mut self,
+        _: &CycleTabMru,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
         self.advance_tab_switcher(1, window, cx);
     }
 
-    pub(super) fn on_action_jump_to_lru_tab(&mut self, _: &JumpToLruTab, window: &mut Window, cx: &mut Context<Self>) {
+    pub(super) fn on_action_jump_to_lru_tab(
+        &mut self,
+        _: &JumpToLruTab,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
         self.advance_tab_switcher(-1, window, cx);
     }
 
     /// GPUI key bindings only fire on key-down, so watching modifier changes
     /// is how the Ctrl release is detected.
-    pub(super) fn on_modifiers_changed(&mut self, event: &ModifiersChangedEvent, _: &mut Window, cx: &mut Context<Self>) {
+    pub(super) fn on_modifiers_changed(
+        &mut self,
+        event: &ModifiersChangedEvent,
+        _: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
         if self.tab_switcher.is_some() && !event.control {
             self.commit_tab_switcher(cx);
         }
     }
 
     fn commit_tab_switcher(&mut self, cx: &mut Context<Self>) {
-        let Some(switcher) = self.tab_switcher.take() else { return };
+        let Some(switcher) = self.tab_switcher.take() else {
+            return;
+        };
         self.tab_switcher_commit_task = None;
         if let Some(&target_id) = switcher.order.get(switcher.selected_ix)
             && let Some(idx) = self.tabs.iter().position(|t| t.id == target_id)
@@ -98,7 +123,11 @@ impl ForgeShell {
         cx.notify();
     }
 
-    pub(super) fn render_tab_switcher_overlay(&self, window: &mut Window, cx: &mut Context<Self>) -> Option<AnyElement> {
+    pub(super) fn render_tab_switcher_overlay(
+        &self,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) -> Option<AnyElement> {
         let switcher = self.tab_switcher.as_ref()?;
         let viewport = window.viewport_size();
 
@@ -119,7 +148,8 @@ impl ForgeShell {
                         .rounded(cx.theme().radius)
                         .cursor_pointer()
                         .when(selected, |el| {
-                            el.bg(cx.theme().tokens.accent).text_color(cx.theme().accent_foreground)
+                            el.bg(cx.theme().tokens.accent)
+                                .text_color(cx.theme().accent_foreground)
                         })
                         .when(!selected, |el| el.hover(|el| el.bg(cx.theme().list_hover)))
                         .child(div().flex_1().text_sm().truncate().child(tab.title.clone()))

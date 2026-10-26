@@ -22,6 +22,9 @@ pub struct Product {
     pub ipc: &'static str,
     /// URL scheme. Reserved; not registered with the OS yet.
     pub scheme: &'static str,
+    /// Prefix for the environment variables the app sets for the processes
+    /// it starts (e.g. `FORGE_SUPER_DEV2_GIT_CREDENTIAL_SOCKET`).
+    pub env_prefix: &'static str,
 }
 
 pub const PRODUCT: Product = Product {
@@ -31,6 +34,7 @@ pub const PRODUCT: Product = Product {
     id: "dev.mentenaz.forge-super.dev2",
     ipc: "Forge-Super-Dev2",
     scheme: "forgesuper-dev2",
+    env_prefix: "FORGE_SUPER_DEV2",
 };
 
 fn under(base: Option<PathBuf>) -> PathBuf {
@@ -77,7 +81,10 @@ mod tests {
     fn windows_uses_appdata_and_localappdata() {
         let appdata = PathBuf::from(std::env::var("APPDATA").unwrap());
         let local = PathBuf::from(std::env::var("LOCALAPPDATA").unwrap());
-        assert_eq!(config_dir(), appdata.join("Mentenaz").join("ForgeSuperDev2"));
+        assert_eq!(
+            config_dir(),
+            appdata.join("Mentenaz").join("ForgeSuperDev2")
+        );
         assert_eq!(data_dir(), local.join("Mentenaz").join("ForgeSuperDev2"));
     }
 }

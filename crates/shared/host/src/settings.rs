@@ -49,7 +49,12 @@ impl Settings {
         settings.save()
     }
 
-    pub fn set_panel(id: &str, key: &str, value: impl Serialize, cx: &mut App) -> std::io::Result<()> {
+    pub fn set_panel(
+        id: &str,
+        key: &str,
+        value: impl Serialize,
+        cx: &mut App,
+    ) -> std::io::Result<()> {
         Self::set(&format!("panels.{id}.{key}"), value, cx)
     }
 }

@@ -41,12 +41,18 @@ where
         const CREATE_NO_WINDOW: u32 = 0x0800_0000;
         command.creation_flags(CREATE_NO_WINDOW);
     }
-    let output = command.output().map_err(|err| GitError(format!("couldn't run git: {err}")))?;
+    let output = command
+        .output()
+        .map_err(|err| GitError(format!("couldn't run git: {err}")))?;
     if output.status.success() {
         Ok(String::from_utf8_lossy(&output.stdout).into_owned())
     } else {
         let stderr = String::from_utf8_lossy(&output.stderr).trim().to_string();
-        Err(GitError(if stderr.is_empty() { format!("git exited with {}", output.status) } else { stderr }))
+        Err(GitError(if stderr.is_empty() {
+            format!("git exited with {}", output.status)
+        } else {
+            stderr
+        }))
     }
 }
 
@@ -93,7 +99,9 @@ impl Repository {
     /// The repository containing `path`, if any.
     pub fn discover(path: &Path) -> Option<Repository> {
         let root = run(path, ["rev-parse", "--show-toplevel"]).ok()?;
-        Some(Repository { root: PathBuf::from(root.trim()) })
+        Some(Repository {
+            root: PathBuf::from(root.trim()),
+        })
     }
 
     /// The top-level folder of this repository or worktree.
@@ -103,21 +111,28 @@ impl Repository {
 
     /// The checked-out branch, or `None` on a detached HEAD.
     pub fn current_branch(&self) -> Result<Option<String>> {
-        let name = run(&self.root, ["branch", "--show-current"])?.trim().to_string();
+        let name = run(&self.root, ["branch", "--show-current"])?
+            .trim()
+            .to_string();
         Ok((!name.is_empty()).then_some(name))
     }
 
     /// Short id of HEAD.
     pub fn head(&self) -> Result<String> {
-        Ok(run(&self.root, ["rev-parse", "--short", "HEAD"])?.trim().to_string())
+        Ok(run(&self.root, ["rev-parse", "--short", "HEAD"])?
+            .trim()
+            .to_string())
     }
 
     /// Local branches, sorted by name.
     pub fn branches(&self) -> Result<Vec<String>> {
-        Ok(run(&self.root, ["for-each-ref", "--format=%(refname:short)", "refs/heads"])?
-            .lines()
-            .map(str::to_string)
-            .collect())
+        Ok(run(
+            &self.root,
+            ["for-each-ref", "--format=%(refname:short)", "refs/heads"],
+        )?
+        .lines()
+        .map(str::to_string)
+        .collect())
     }
 
     pub fn switch(&self, branch: &str) -> Result<()> {
@@ -132,23 +147,42 @@ impl Repository {
     /// Adds a worktree at `path` on a new branch `branch`, starting from
     /// `base` (a branch or commit).
     pub fn add_worktree(&self, path: &Path, branch: &str, base: &str) -> Result<()> {
-        let args: [&OsStr; 6] =
-            ["worktree".as_ref(), "add".as_ref(), "-b".as_ref(), branch.as_ref(), path.as_os_str(), base.as_ref()];
+        let args: [&OsStr; 6] = [
+            "worktree".as_ref(),
+            "add".as_ref(),
+            "-b".as_ref(),
+            branch.as_ref(),
+            path.as_os_str(),
+            base.as_ref(),
+        ];
         run(&self.root, args).map(drop)
     }
 
     /// Changed, untracked and conflicted files.
     pub fn status(&self) -> Result<Vec<FileStatus>> {
-        let output = run(&self.root, ["status", "--porcelain=v1", "-z", "--untracked-files=all"])?;
+        let output = run(
+            &self.root,
+            ["status", "--porcelain=v1", "-z", "--untracked-files=all"],
+        )?;
         Ok(parse_status(&output))
     }
 
     pub fn stage(&self, paths: &[&str]) -> Result<()> {
-        run(&self.root, ["add", "--"].into_iter().chain(paths.iter().copied())).map(drop)
+        run(
+            &self.root,
+            ["add", "--"].into_iter().chain(paths.iter().copied()),
+        )
+        .map(drop)
     }
 
     pub fn unstage(&self, paths: &[&str]) -> Result<()> {
-        run(&self.root, ["restore", "--staged", "--"].into_iter().chain(paths.iter().copied())).map(drop)
+        run(
+            &self.root,
+            ["restore", "--staged", "--"]
+                .into_iter()
+                .chain(paths.iter().copied()),
+        )
+        .map(drop)
     }
 
     /// Commits what is staged, with the user's git identity.
@@ -176,7 +210,12 @@ fn parse_worktrees(output: &str) -> Vec<Worktree> {
         }
         if let Some(path) = path {
             let is_main = worktrees.is_empty();
-            worktrees.push(Worktree { path, branch, head, is_main });
+            worktrees.push(Worktree {
+                path,
+                branch,
+                head,
+                is_main,
+            });
         }
     }
     worktrees
@@ -197,7 +236,16 @@ fn parse_status(output: &str) -> Vec<FileStatus> {
         if x == 'R' || x == 'C' {
             fields.next(); // the original path
         }
-        let conflicted = matches!((x, y), ('D', 'D') | ('A', 'U') | ('U', 'D') | ('U', 'A') | ('D', 'U') | ('A', 'A') | ('U', 'U'));
+        let conflicted = matches!(
+            (x, y),
+            ('D', 'D')
+                | ('A', 'U')
+                | ('U', 'D')
+                | ('U', 'A')
+                | ('D', 'U')
+                | ('A', 'A')
+                | ('U', 'U')
+        );
         let state = if conflicted {
             FileState::Conflicted
         } else if x == '?' {
@@ -263,7 +311,10 @@ mod tests {
     #[test]
     fn worktrees_list_and_add() {
         let (dir, repo) = repo();
-        let extra = dir.path().join("..").join(format!("wt-{}", std::process::id()));
+        let extra = dir
+            .path()
+            .join("..")
+            .join(format!("wt-{}", std::process::id()));
         repo.add_worktree(&extra, "feature/wt", "main").unwrap();
 
         let worktrees = repo.worktrees().unwrap();
@@ -272,7 +323,12 @@ mod tests {
         assert_eq!(worktrees[0].branch.as_deref(), Some("main"));
         assert_eq!(worktrees[1].branch.as_deref(), Some("feature/wt"));
         assert!(!worktrees[1].is_main);
-        let _ = run(repo.root(), ["worktree", "remove", "--force"].into_iter().chain([extra.to_str().unwrap()]));
+        let _ = run(
+            repo.root(),
+            ["worktree", "remove", "--force"]
+                .into_iter()
+                .chain([extra.to_str().unwrap()]),
+        );
     }
 
     #[test]
@@ -294,11 +350,18 @@ mod tests {
         assert_eq!(find(&status, "new.txt").state, FileState::Added);
 
         repo.unstage(&["new.txt"]).unwrap();
-        assert_eq!(find(&repo.status().unwrap(), "new.txt").state, FileState::Untracked);
+        assert_eq!(
+            find(&repo.status().unwrap(), "new.txt").state,
+            FileState::Untracked
+        );
 
         repo.commit("second").unwrap();
         let status = repo.status().unwrap();
-        assert_eq!(status.len(), 1, "only the unstaged file is left: {status:?}");
+        assert_eq!(
+            status.len(),
+            1,
+            "only the unstaged file is left: {status:?}"
+        );
         assert!(repo.commit("nothing staged").is_err());
     }
 
@@ -306,7 +369,10 @@ mod tests {
     fn parses_renames_and_conflicts() {
         let status = parse_status("R  new.rs\0old.rs\0UU both.rs\0?? scratch.md\0");
         assert_eq!(status.len(), 3);
-        assert_eq!((status[0].path.as_str(), status[0].state), ("new.rs", FileState::Renamed));
+        assert_eq!(
+            (status[0].path.as_str(), status[0].state),
+            ("new.rs", FileState::Renamed)
+        );
         assert_eq!(status[1].state, FileState::Conflicted);
         assert_eq!(status[2].state, FileState::Untracked);
     }

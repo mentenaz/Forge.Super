@@ -42,11 +42,18 @@ fn color(state: FileState, cx: &App) -> Hsla {
 }
 
 /// Reports a failed git operation with git's message.
-fn report(task: Task<Result<(), GitError>>, failure: &'static str, window: &mut Window, cx: &mut App) {
+fn report(
+    task: Task<Result<(), GitError>>,
+    failure: &'static str,
+    window: &mut Window,
+    cx: &mut App,
+) {
     window
         .spawn(cx, async move |cx| {
             if let Err(err) = task.await {
-                let _ = cx.update(|window, cx| Host::notify(NoticeKind::Warning, failure, err.0, window, cx));
+                let _ = cx.update(|window, cx| {
+                    Host::notify(NoticeKind::Warning, failure, err.0, window, cx)
+                });
             }
         })
         .detach();
@@ -54,16 +61,24 @@ fn report(task: Task<Result<(), GitError>>, failure: &'static str, window: &mut 
 
 impl GitPanel {
     pub fn new(window: &mut Window, cx: &mut Context<Self>) -> Self {
-        let message = cx.new(|cx| InputState::new(window, cx).placeholder("Commit message (Enter to commit)"));
+        let message = cx
+            .new(|cx| InputState::new(window, cx).placeholder("Commit message (Enter to commit)"));
         let subscriptions = vec![
             cx.observe(&Workspace::model(cx), |_, _, cx| cx.notify()),
-            cx.subscribe_in(&message, window, |this, _, event: &InputEvent, window, cx| match event {
-                InputEvent::PressEnter { .. } => this.commit(window, cx),
-                InputEvent::Change => cx.notify(),
-                _ => {}
-            }),
+            cx.subscribe_in(
+                &message,
+                window,
+                |this, _, event: &InputEvent, window, cx| match event {
+                    InputEvent::PressEnter { .. } => this.commit(window, cx),
+                    InputEvent::Change => cx.notify(),
+                    _ => {}
+                },
+            ),
         ];
-        Self { message, _subscriptions: subscriptions }
+        Self {
+            message,
+            _subscriptions: subscriptions,
+        }
     }
 
     fn stage(paths: Vec<String>, window: &mut Window, cx: &mut App) {
@@ -89,7 +104,8 @@ impl GitPanel {
             return;
         }
         let message = self.message.read(cx).value().trim().to_string();
-        let task = Workspace::model(cx).update(cx, |workspace, cx| workspace.commit(message.clone(), cx));
+        let task =
+            Workspace::model(cx).update(cx, |workspace, cx| workspace.commit(message.clone(), cx));
         let input = self.message.clone();
         window
             .spawn(cx, async move |cx| {
@@ -100,7 +116,9 @@ impl GitPanel {
                         let first_line = message.lines().next().unwrap_or_default().to_string();
                         Host::notify(NoticeKind::Success, "Committed", first_line, window, cx);
                     }
-                    Err(err) => Host::notify(NoticeKind::Warning, "Couldn't commit", err.0, window, cx),
+                    Err(err) => {
+                        Host::notify(NoticeKind::Warning, "Couldn't commit", err.0, window, cx)
+                    }
                 });
             })
             .detach();
@@ -118,7 +136,11 @@ impl GitPanel {
             return None;
         }
         let all: Vec<String> = files.iter().map(|f| f.path.clone()).collect();
-        let (bulk_label, bulk_id) = if staged { ("Unstage All", "unstage-all") } else { ("Stage All", "stage-all") };
+        let (bulk_label, bulk_id) = if staged {
+            ("Unstage All", "unstage-all")
+        } else {
+            ("Stage All", "stage-all")
+        };
         let is_conflicts = title == "Merge Conflicts";
 
         let header = h_flex()
@@ -132,13 +154,17 @@ impl GitPanel {
             .child(format!("{} ({})", title.to_uppercase(), files.len()))
             .when(!is_conflicts, |el| {
                 el.child(
-                    Button::new(bulk_id).ghost().xsmall().label(bulk_label).on_click(move |_, window, cx| {
-                        if staged {
-                            Self::unstage(all.clone(), window, cx);
-                        } else {
-                            Self::stage(all.clone(), window, cx);
-                        }
-                    }),
+                    Button::new(bulk_id)
+                        .ghost()
+                        .xsmall()
+                        .label(bulk_label)
+                        .on_click(move |_, window, cx| {
+                            if staged {
+                                Self::unstage(all.clone(), window, cx);
+                            } else {
+                                Self::stage(all.clone(), window, cx);
+                            }
+                        }),
                 )
             });
 
@@ -174,14 +200,24 @@ impl GitPanel {
                         .min_w_0()
                         .gap_1p5()
                         .child(div().truncate().child(name))
-                        .child(div().truncate().text_xs().text_color(cx.theme().muted_foreground).child(dir)),
+                        .child(
+                            div()
+                                .truncate()
+                                .text_xs()
+                                .text_color(cx.theme().muted_foreground)
+                                .child(dir),
+                        ),
                 )
                 .child(
                     div().invisible().group_hover(group, |s| s.visible()).child(
                         Button::new(SharedString::from(format!("toggle-{title}-{path}")))
                             .ghost()
                             .xsmall()
-                            .icon(if staged { IconName::Minus } else { IconName::Plus })
+                            .icon(if staged {
+                                IconName::Minus
+                            } else {
+                                IconName::Plus
+                            })
                             .tooltip(if staged { "Unstage" } else { "Stage" })
                             .on_click(move |_, window, cx| {
                                 cx.stop_propagation();
@@ -212,11 +248,23 @@ impl Render for GitPanel {
                 .into_any_element();
         };
 
-        let conflicts: Vec<_> = git.status.iter().filter(|f| f.state == FileState::Conflicted).cloned().collect();
+        let conflicts: Vec<_> = git
+            .status
+            .iter()
+            .filter(|f| f.state == FileState::Conflicted)
+            .cloned()
+            .collect();
         let staged: Vec<_> = git.status.iter().filter(|f| f.staged).cloned().collect();
-        let unstaged: Vec<_> =
-            git.status.iter().filter(|f| f.unstaged && f.state != FileState::Conflicted).cloned().collect();
-        let branch = git.branch.clone().unwrap_or_else(|| format!("detached at {}", git.head));
+        let unstaged: Vec<_> = git
+            .status
+            .iter()
+            .filter(|f| f.unstaged && f.state != FileState::Conflicted)
+            .cloned()
+            .collect();
+        let branch = git
+            .branch
+            .clone()
+            .unwrap_or_else(|| format!("detached at {}", git.head));
         let can_commit = self.can_commit(cx);
         let total = git.status.len();
 
@@ -239,13 +287,22 @@ impl Render for GitPanel {
                     .text_sm()
                     .border_b_1()
                     .border_color(cx.theme().border)
-                    .child(Icon::empty().path("icons/git-branch.svg").small().text_color(cx.theme().muted_foreground))
+                    .child(
+                        Icon::empty()
+                            .path("icons/git-branch.svg")
+                            .small()
+                            .text_color(cx.theme().muted_foreground),
+                    )
                     .child(div().font_semibold().truncate().child(branch))
                     .child(
                         div()
                             .text_xs()
                             .text_color(cx.theme().muted_foreground)
-                            .child(if total == 0 { "No changes".to_string() } else { format!("{total} changed") }),
+                            .child(if total == 0 {
+                                "No changes".to_string()
+                            } else {
+                                format!("{total} changed")
+                            }),
                     ),
             )
             .child(

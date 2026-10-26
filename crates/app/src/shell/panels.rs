@@ -14,23 +14,42 @@ use forge_host::{DockPosition, Host, PanelInfo, TabRequest, register_panel};
 use gpui::{
     App, AppContext, Context, IntoElement, ParentElement, Render, SharedString, Styled, Window, div,
 };
-use gpui_component::{
-    ActiveTheme, Icon, IconName, StyledExt,
-    button::Button,
-    v_flex,
-};
+use gpui_component::{ActiveTheme, Icon, IconName, StyledExt, button::Button, v_flex};
 
 /// A registered panel's id (`PanelInfo::id`).
 pub(super) type PanelId = &'static str;
 
 /// The Zed edition's panels, with its icons and default docks.
 fn builtin_panels() -> Vec<PanelInfo> {
-    let (left, right, bottom) = (DockPosition::Left, DockPosition::Right, DockPosition::Bottom);
+    let (left, right, bottom) = (
+        DockPosition::Left,
+        DockPosition::Right,
+        DockPosition::Bottom,
+    );
     let path = |p: &'static str| Icon::empty().path(p);
-    let panel = |id, title, icon, default_dock, order| PanelInfo { id, title, icon, tooltip: None, default_dock, order };
+    let panel = |id, title, icon, default_dock, order| PanelInfo {
+        id,
+        title,
+        icon,
+        tooltip: None,
+        default_dock,
+        order,
+    };
     vec![
-        panel("explorer", "Explorer", path("icons/zed_file_tree.svg"), left, 0),
-        panel("cockpit", "Cockpit", path("icons/zed_cockpit.svg"), left, 10),
+        panel(
+            "explorer",
+            "Explorer",
+            path("icons/zed_file_tree.svg"),
+            left,
+            0,
+        ),
+        panel(
+            "cockpit",
+            "Cockpit",
+            path("icons/zed_cockpit.svg"),
+            left,
+            10,
+        ),
         panel("helm", "Helm", Icon::new(IconName::Github), left, 20),
         panel("python", "Python", path("icons/zed_python.svg"), left, 30),
         panel("node", "Node", path("icons/zed_node.svg"), left, 40),
@@ -39,12 +58,48 @@ fn builtin_panels() -> Vec<PanelInfo> {
         panel("rust", "Rust", path("icons/zed_file_rust.svg"), left, 70),
         panel("demo", "Demo", path("icons/Demo.svg"), left, 1000),
         panel("git", "Git", path("icons/zed_git_branch.svg"), right, 0),
-        panel("outline", "Outline", path("icons/zed_list_tree.svg"), right, 10),
-        panel("terminal", "Terminal", path("icons/zed_terminal_alt.svg"), bottom, 0),
-        panel("debugger", "Debugger", path("icons/zed_debug.svg"), bottom, 10),
-        panel("database", "Database", path("icons/zed_database_zap.svg"), bottom, 20),
-        panel("script-runner", "Script Runner", path("icons/zed_runner.svg"), bottom, 30),
-        panel("processes", "Processes", Icon::new(IconName::Cpu), bottom, 40),
+        panel(
+            "outline",
+            "Outline",
+            path("icons/zed_list_tree.svg"),
+            right,
+            10,
+        ),
+        panel(
+            "terminal",
+            "Terminal",
+            path("icons/zed_terminal_alt.svg"),
+            bottom,
+            0,
+        ),
+        panel(
+            "debugger",
+            "Debugger",
+            path("icons/zed_debug.svg"),
+            bottom,
+            10,
+        ),
+        panel(
+            "database",
+            "Database",
+            path("icons/zed_database_zap.svg"),
+            bottom,
+            20,
+        ),
+        panel(
+            "script-runner",
+            "Script Runner",
+            path("icons/zed_runner.svg"),
+            bottom,
+            30,
+        ),
+        panel(
+            "processes",
+            "Processes",
+            Icon::new(IconName::Cpu),
+            bottom,
+            40,
+        ),
     ]
 }
 
@@ -111,7 +166,9 @@ impl Render for PlaceholderPanel {
                 Button::new("open-panel-tab")
                     .outline()
                     .label(format!("Open {title} tab"))
-                    .on_click(move |_, window, cx| Host::open_tab(panel_tab(id, title, icon.clone()), window, cx)),
+                    .on_click(move |_, window, cx| {
+                        Host::open_tab(panel_tab(id, title, icon.clone()), window, cx)
+                    }),
             )
     }
 }

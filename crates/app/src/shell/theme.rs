@@ -20,7 +20,11 @@ pub(super) fn init(cx: &mut App) {
     if let Err(err) = ThemeRegistry::global_mut(cx).load_themes_from_str(FORGE_THEMES) {
         eprintln!("failed to load the Forge themes: {err}");
     }
-    if let Some(dark) = ThemeRegistry::global(cx).themes().get(DEFAULT_DARK).cloned() {
+    if let Some(dark) = ThemeRegistry::global(cx)
+        .themes()
+        .get(DEFAULT_DARK)
+        .cloned()
+    {
         Theme::global_mut(cx).dark_theme = dark;
     }
     let mode = match Settings::get::<String>("theme", cx).as_deref() {
@@ -40,7 +44,11 @@ pub(super) fn init(cx: &mut App) {
 /// Saves the theme mode and font sizes; unchanged values aren't rewritten.
 pub(super) fn save(cx: &mut App) {
     let theme = Theme::global(cx);
-    let mode = if theme.mode.is_dark() { "dark" } else { "light" };
+    let mode = if theme.mode.is_dark() {
+        "dark"
+    } else {
+        "light"
+    };
     let (ui, mono) = (f32::from(theme.font_size), f32::from(theme.mono_font_size));
     let _ = Settings::set("theme", mode, cx);
     let _ = Settings::set("ui_font_size", ui, cx);

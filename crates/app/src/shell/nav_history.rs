@@ -33,7 +33,9 @@ impl ForgeShell {
     }
 
     pub(super) fn can_go_forward(&self) -> bool {
-        self.nav_forward.iter().any(|&id| self.find_tab(id).is_some())
+        self.nav_forward
+            .iter()
+            .any(|&id| self.find_tab(id).is_some())
     }
 
     pub(super) fn go_back(&mut self, cx: &mut Context<Self>) {
@@ -47,12 +49,22 @@ impl ForgeShell {
     fn navigate(&mut self, back: bool, cx: &mut Context<Self>) {
         let current = self.current_tab_id();
         loop {
-            let entry = if back { self.nav_back.pop() } else { self.nav_forward.pop() };
+            let entry = if back {
+                self.nav_back.pop()
+            } else {
+                self.nav_forward.pop()
+            };
             let Some(id) = entry else { return };
             // Entries for tabs closed since are skipped.
-            let Some((group, idx)) = self.find_tab(id) else { continue };
+            let Some((group, idx)) = self.find_tab(id) else {
+                continue;
+            };
             if let Some(current) = current {
-                if back { self.nav_forward.push(current) } else { self.nav_back.push(current) }
+                if back {
+                    self.nav_forward.push(current)
+                } else {
+                    self.nav_back.push(current)
+                }
             }
             self.suppress_nav_record = true;
             self.activate(group, idx, cx);

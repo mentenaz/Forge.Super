@@ -39,17 +39,39 @@ impl ForgeShell {
             .rounded(cx.theme().radius)
             .shadow_md()
             .py_1()
-            .child(self.menu_item("tab-ctx-close", "Close", true, cx, move |this, _, cx| this.close(group, idx, cx)))
-            .child(self.menu_item("tab-ctx-close-others", "Close Others", tab_count > 1, cx, move |this, _, cx| {
-                this.close_others(group, idx, cx)
-            }))
-            .child(self.menu_item("tab-ctx-close-left", "Close to the Left", idx > 0, cx, move |this, _, cx| {
-                this.close_left(group, idx, cx)
-            }))
-            .child(self.menu_item("tab-ctx-close-right", "Close to the Right", idx + 1 < tab_count, cx, move |this, _, cx| {
-                this.close_right(group, idx, cx)
-            }))
-            .child(self.menu_item("tab-ctx-close-all", "Close All", true, cx, move |this, _, cx| this.close_all(group, cx)))
+            .child(
+                self.menu_item("tab-ctx-close", "Close", true, cx, move |this, _, cx| {
+                    this.close(group, idx, cx)
+                }),
+            )
+            .child(self.menu_item(
+                "tab-ctx-close-others",
+                "Close Others",
+                tab_count > 1,
+                cx,
+                move |this, _, cx| this.close_others(group, idx, cx),
+            ))
+            .child(self.menu_item(
+                "tab-ctx-close-left",
+                "Close to the Left",
+                idx > 0,
+                cx,
+                move |this, _, cx| this.close_left(group, idx, cx),
+            ))
+            .child(self.menu_item(
+                "tab-ctx-close-right",
+                "Close to the Right",
+                idx + 1 < tab_count,
+                cx,
+                move |this, _, cx| this.close_right(group, idx, cx),
+            ))
+            .child(self.menu_item(
+                "tab-ctx-close-all",
+                "Close All",
+                true,
+                cx,
+                move |this, _, cx| this.close_all(group, cx),
+            ))
             .child(self.menu_separator(cx))
             .child(self.menu_item(
                 "tab-ctx-pin",
@@ -59,26 +81,50 @@ impl ForgeShell {
                 move |this, _, cx| this.toggle_pin(group, idx, cx),
             ))
             .when_some(path, |el, path| {
-                el.child(self.menu_item("tab-ctx-copy-path", "Copy Relative Path", true, cx, move |_, _, cx| {
-                    cx.write_to_clipboard(ClipboardItem::new_string(path.to_string()));
-                }))
+                el.child(self.menu_item(
+                    "tab-ctx-copy-path",
+                    "Copy Relative Path",
+                    true,
+                    cx,
+                    move |_, _, cx| {
+                        cx.write_to_clipboard(ClipboardItem::new_string(path.to_string()));
+                    },
+                ))
             })
             .child(self.menu_separator(cx))
             .when(is_primary, |el| {
-                el.child(self.menu_item("tab-ctx-split", "Split Right", true, cx, move |this, window, cx| {
-                    this.duplicate_tab_in_split(idx, window, cx)
-                }))
-                .child(self.menu_item("tab-ctx-move-split", "Move to Split Pane", true, cx, move |this, _, cx| {
-                    this.move_tab_to_split(idx, cx)
-                }))
+                el.child(self.menu_item(
+                    "tab-ctx-split",
+                    "Split Right",
+                    true,
+                    cx,
+                    move |this, window, cx| this.duplicate_tab_in_split(idx, window, cx),
+                ))
+                .child(self.menu_item(
+                    "tab-ctx-move-split",
+                    "Move to Split Pane",
+                    true,
+                    cx,
+                    move |this, _, cx| this.move_tab_to_split(idx, cx),
+                ))
             })
             .when(!is_primary, |el| {
-                el.child(self.menu_item("tab-ctx-move-primary", "Move to Main Pane", true, cx, move |this, _, cx| {
-                    this.move_split_tab_to_editor(idx, cx)
-                }))
+                el.child(self.menu_item(
+                    "tab-ctx-move-primary",
+                    "Move to Main Pane",
+                    true,
+                    cx,
+                    move |this, _, cx| this.move_split_tab_to_editor(idx, cx),
+                ))
             })
             .when(self.split_open(), |el| {
-                el.child(self.menu_item("tab-ctx-swap-panes", "Swap Panes", true, cx, |this, _, cx| this.swap_panes(cx)))
+                el.child(self.menu_item(
+                    "tab-ctx-swap-panes",
+                    "Swap Panes",
+                    true,
+                    cx,
+                    |this, _, cx| this.swap_panes(cx),
+                ))
             });
 
         // Full-window backdrop: clicking anywhere outside the menu closes it.

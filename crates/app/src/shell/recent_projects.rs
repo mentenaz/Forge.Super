@@ -6,12 +6,14 @@
 use std::path::{Path, PathBuf};
 
 use gpui::{
-    Anchor, Context, InteractiveElement, IntoElement, KeyDownEvent, ParentElement, PathPromptOptions, SharedString,
-    StatefulInteractiveElement, Styled, Window, div, prelude::FluentBuilder, px,
+    Anchor, Context, InteractiveElement, IntoElement, KeyDownEvent, ParentElement,
+    PathPromptOptions, SharedString, StatefulInteractiveElement, Styled, Window, div,
+    prelude::FluentBuilder, px,
 };
 use gpui_component::{
-    ActiveTheme, Icon, IconName, Sizable, StyledExt, h_flex,
+    ActiveTheme, Icon, IconName, Sizable, StyledExt,
     button::{Button, ButtonVariants},
+    h_flex,
     input::Input,
     kbd::Kbd,
     popover::Popover,
@@ -82,11 +84,13 @@ impl ForgeShell {
         match event.keystroke.key.as_str() {
             "up" if count > 0 => {
                 self.project_picker_selected = (self.project_picker_selected + count - 1) % count;
-                self.project_list_scroll.scroll_to_item(self.project_picker_selected);
+                self.project_list_scroll
+                    .scroll_to_item(self.project_picker_selected);
             }
             "down" if count > 0 => {
                 self.project_picker_selected = (self.project_picker_selected + 1) % count;
-                self.project_list_scroll.scroll_to_item(self.project_picker_selected);
+                self.project_list_scroll
+                    .scroll_to_item(self.project_picker_selected);
             }
             "enter" => {
                 if let Some(path) = self.filtered_projects(cx).get(self.project_picker_selected) {
@@ -111,9 +115,17 @@ impl ForgeShell {
         cx.notify();
     }
 
-    pub(super) fn render_project_picker(&self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+    pub(super) fn render_project_picker(
+        &self,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) -> impl IntoElement {
         let has_project = self.workspace_root.is_some();
-        let label = if has_project { self.workspace_label() } else { "Open Recent Project".to_string() };
+        let label = if has_project {
+            self.workspace_label()
+        } else {
+            "Open Recent Project".to_string()
+        };
 
         Popover::new("recent-projects")
             .anchor(Anchor::TopLeft)
@@ -139,8 +151,15 @@ impl ForgeShell {
             .child(self.render_recent_projects(window, cx))
     }
 
-    fn render_recent_projects(&self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
-        let current = self.workspace_root.as_ref().map(|p| p.to_string_lossy().into_owned());
+    fn render_recent_projects(
+        &self,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) -> impl IntoElement {
+        let current = self
+            .workspace_root
+            .as_ref()
+            .map(|p| p.to_string_lossy().into_owned());
         let projects = self.filtered_projects(cx);
 
         let rows: Vec<_> = projects
@@ -162,7 +181,9 @@ impl ForgeShell {
                     .rounded(cx.theme().radius)
                     .cursor_pointer()
                     .when(is_selected, |el| el.bg(cx.theme().list_active))
-                    .when(!is_selected, |el| el.hover(|el| el.bg(cx.theme().list_hover)))
+                    .when(!is_selected, |el| {
+                        el.hover(|el| el.bg(cx.theme().list_hover))
+                    })
                     .child(
                         v_flex()
                             .flex_1()
@@ -198,7 +219,9 @@ impl ForgeShell {
                                 .p_0p5()
                                 .rounded_sm()
                                 .text_color(cx.theme().muted_foreground)
-                                .hover(|d| d.bg(cx.theme().secondary).text_color(cx.theme().foreground))
+                                .hover(|d| {
+                                    d.bg(cx.theme().secondary).text_color(cx.theme().foreground)
+                                })
                                 .child(Icon::new(IconName::Close).xsmall())
                                 .on_click(cx.listener(move |this, _, _, cx| {
                                     cx.stop_propagation();
@@ -208,7 +231,11 @@ impl ForgeShell {
                                 })),
                         )
                     })
-                    .on_click(cx.listener(move |this, _, _, cx| this.set_workspace(open_path.clone(), cx)))
+                    .on_click(
+                        cx.listener(move |this, _, _, cx| {
+                            this.set_workspace(open_path.clone(), cx)
+                        }),
+                    )
             })
             .collect();
 
@@ -240,7 +267,11 @@ impl ForgeShell {
                     .py_1()
                     .border_b_1()
                     .border_color(cx.theme().border)
-                    .child(Input::new(&self.project_search).appearance(false).cleanable(true)),
+                    .child(
+                        Input::new(&self.project_search)
+                            .appearance(false)
+                            .cleanable(true),
+                    ),
             )
             .child(list)
             .child(

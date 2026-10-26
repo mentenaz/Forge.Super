@@ -7,8 +7,8 @@
 //!   gpui-component's `TitleBar`.
 
 use gpui::{
-    Anchor, App, Context, InteractiveElement, IntoElement, MouseButton, ParentElement,
-    Styled, Window, div, prelude::FluentBuilder, px,
+    Anchor, App, Context, InteractiveElement, IntoElement, MouseButton, ParentElement, Styled,
+    Window, div, prelude::FluentBuilder, px,
 };
 use gpui_component::{
     ActiveTheme, IconName, Sizable, Theme, ThemeMode, TitleBar,
@@ -29,7 +29,11 @@ fn set_font_size(size: f32, window: &mut Window, cx: &mut App) {
 fn set_radius(radius: f32, window: &mut Window, cx: &mut App) {
     let theme = Theme::global_mut(cx);
     theme.radius = px(radius);
-    theme.radius_lg = if theme.radius > px(0.) { theme.radius + px(2.) } else { px(0.) };
+    theme.radius_lg = if theme.radius > px(0.) {
+        theme.radius + px(2.)
+    } else {
+        px(0.)
+    };
     Theme::sync_base(cx);
     window.refresh();
 }
@@ -58,22 +62,56 @@ impl ForgeShell {
                 menu.scrollable(true)
                     .max_h(px(520.))
                     .label("Font Size")
-                    .item(PopupMenuItem::new("Large (16px)").checked(font_size == 16).on_click(|_, w, cx| set_font_size(16., w, cx)))
-                    .item(PopupMenuItem::new("Medium (14px)").checked(font_size == 14).on_click(|_, w, cx| set_font_size(14., w, cx)))
-                    .item(PopupMenuItem::new("Default (13px)").checked(font_size == 13).on_click(|_, w, cx| set_font_size(13., w, cx)))
-                    .item(PopupMenuItem::new("Small (12px)").checked(font_size == 12).on_click(|_, w, cx| set_font_size(12., w, cx)))
+                    .item(
+                        PopupMenuItem::new("Large (16px)")
+                            .checked(font_size == 16)
+                            .on_click(|_, w, cx| set_font_size(16., w, cx)),
+                    )
+                    .item(
+                        PopupMenuItem::new("Medium (14px)")
+                            .checked(font_size == 14)
+                            .on_click(|_, w, cx| set_font_size(14., w, cx)),
+                    )
+                    .item(
+                        PopupMenuItem::new("Default (13px)")
+                            .checked(font_size == 13)
+                            .on_click(|_, w, cx| set_font_size(13., w, cx)),
+                    )
+                    .item(
+                        PopupMenuItem::new("Small (12px)")
+                            .checked(font_size == 12)
+                            .on_click(|_, w, cx| set_font_size(12., w, cx)),
+                    )
                     .separator()
                     .label("Border Radius")
-                    .item(PopupMenuItem::new("8px").checked(radius == 8).on_click(|_, w, cx| set_radius(8., w, cx)))
-                    .item(PopupMenuItem::new("6px (default)").checked(radius == 6).on_click(|_, w, cx| set_radius(6., w, cx)))
-                    .item(PopupMenuItem::new("4px").checked(radius == 4).on_click(|_, w, cx| set_radius(4., w, cx)))
-                    .item(PopupMenuItem::new("0px").checked(radius == 0).on_click(|_, w, cx| set_radius(0., w, cx)))
+                    .item(
+                        PopupMenuItem::new("8px")
+                            .checked(radius == 8)
+                            .on_click(|_, w, cx| set_radius(8., w, cx)),
+                    )
+                    .item(
+                        PopupMenuItem::new("6px (default)")
+                            .checked(radius == 6)
+                            .on_click(|_, w, cx| set_radius(6., w, cx)),
+                    )
+                    .item(
+                        PopupMenuItem::new("4px")
+                            .checked(radius == 4)
+                            .on_click(|_, w, cx| set_radius(4., w, cx)),
+                    )
+                    .item(
+                        PopupMenuItem::new("0px")
+                            .checked(radius == 0)
+                            .on_click(|_, w, cx| set_radius(0., w, cx)),
+                    )
                     .separator()
                     .label("Scrollbar")
                     .item(
                         PopupMenuItem::new("Scrolling to show")
                             .checked(scrollbar == ScrollbarMode::Scrolling)
-                            .on_click(|_, w, cx| set_scrollbar_mode(ScrollbarMode::Scrolling, w, cx)),
+                            .on_click(|_, w, cx| {
+                                set_scrollbar_mode(ScrollbarMode::Scrolling, w, cx)
+                            }),
                     )
                     .item(
                         PopupMenuItem::new("Hover to show")
@@ -87,42 +125,78 @@ impl ForgeShell {
                     )
                     .separator()
                     .label("Title Bar")
-                    .item(PopupMenuItem::new("Show Menu Bar").checked(show_menus).on_click({
-                        let this = this.clone();
-                        move |_, _, cx| {
-                            this.update(cx, |this, cx| {
-                                this.show_menus = !this.show_menus;
-                                let _ = forge_host::Settings::set("show_menus", this.show_menus, cx);
-                                cx.notify();
-                            })
-                            .ok();
-                        }
-                    }))
+                    .item(
+                        PopupMenuItem::new("Show Menu Bar")
+                            .checked(show_menus)
+                            .on_click({
+                                let this = this.clone();
+                                move |_, _, cx| {
+                                    this.update(cx, |this, cx| {
+                                        this.show_menus = !this.show_menus;
+                                        let _ = forge_host::Settings::set(
+                                            "show_menus",
+                                            this.show_menus,
+                                            cx,
+                                        );
+                                        cx.notify();
+                                    })
+                                    .ok();
+                                }
+                            }),
+                    )
                     .separator()
                     .label("Developer")
-                    .item(PopupMenuItem::new("Send test notification").on_click(move |_, window, cx| {
-                        this.update(cx, |this, cx| {
-                            this.notify(NoticeKind::Info, "Test notification", "Notifications show here and in the bell's list.", window, cx);
-                        })
-                        .ok();
-                    }))
+                    .item(PopupMenuItem::new("Send test notification").on_click(
+                        move |_, window, cx| {
+                            this.update(cx, |this, cx| {
+                                this.notify(
+                                    NoticeKind::Info,
+                                    "Test notification",
+                                    "Notifications show here and in the bell's list.",
+                                    window,
+                                    cx,
+                                );
+                            })
+                            .ok();
+                        },
+                    ))
             })
             .anchor(Anchor::TopRight)
     }
 
-    pub(super) fn render_title_bar(&self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+    pub(super) fn render_title_bar(
+        &self,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) -> impl IntoElement {
         // Worktree and branch pickers only inside a git repository.
-        let worktree = self.render_worktree_picker(window, cx).map(IntoElement::into_any_element);
-        let branch = self.render_branch_picker(cx).map(IntoElement::into_any_element);
+        let worktree = self
+            .render_worktree_picker(window, cx)
+            .map(IntoElement::into_any_element);
+        let branch = self
+            .render_branch_picker(cx)
+            .map(IntoElement::into_any_element);
         let separator = worktree.is_some() && branch.is_some();
         let is_dark = cx.theme().mode.is_dark();
         let theme_button = Button::new("forge-theme")
             .small()
             .ghost()
-            .icon(if is_dark { IconName::Sun } else { IconName::Moon })
-            .tooltip(if is_dark { "Switch to light theme" } else { "Switch to dark theme" })
+            .icon(if is_dark {
+                IconName::Sun
+            } else {
+                IconName::Moon
+            })
+            .tooltip(if is_dark {
+                "Switch to light theme"
+            } else {
+                "Switch to dark theme"
+            })
             .on_click(move |_, window, cx| {
-                let mode = if is_dark { ThemeMode::Light } else { ThemeMode::Dark };
+                let mode = if is_dark {
+                    ThemeMode::Light
+                } else {
+                    ThemeMode::Dark
+                };
                 Theme::change(mode, Some(window), cx);
             });
 
@@ -140,7 +214,13 @@ impl ForgeShell {
                     .child(self.render_project_picker(window, cx))
                     .children(worktree)
                     .when(separator, |el| {
-                        el.child(div().text_sm().text_color(cx.theme().muted_foreground).opacity(0.25).child("/"))
+                        el.child(
+                            div()
+                                .text_sm()
+                                .text_color(cx.theme().muted_foreground)
+                                .opacity(0.25)
+                                .child("/"),
+                        )
                     })
                     .children(branch),
             )

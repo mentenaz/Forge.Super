@@ -20,15 +20,30 @@ pub(crate) struct JsonStore {
 impl JsonStore {
     pub(crate) fn load(path: PathBuf) -> Self {
         let (value, load_error) = match std::fs::read_to_string(&path) {
-            Err(err) if err.kind() == std::io::ErrorKind::NotFound => (Value::Object(Map::new()), None),
-            Err(err) => (Value::Object(Map::new()), Some(format!("{}: {err}", path.display()))),
+            Err(err) if err.kind() == std::io::ErrorKind::NotFound => {
+                (Value::Object(Map::new()), None)
+            }
+            Err(err) => (
+                Value::Object(Map::new()),
+                Some(format!("{}: {err}", path.display())),
+            ),
             Ok(text) => match serde_json::from_str::<Value>(&text) {
                 Ok(value @ Value::Object(_)) => (value, None),
-                Ok(_) => (Value::Object(Map::new()), Some(format!("{}: not a JSON object", path.display()))),
-                Err(err) => (Value::Object(Map::new()), Some(format!("{}: {err}", path.display()))),
+                Ok(_) => (
+                    Value::Object(Map::new()),
+                    Some(format!("{}: not a JSON object", path.display())),
+                ),
+                Err(err) => (
+                    Value::Object(Map::new()),
+                    Some(format!("{}: {err}", path.display())),
+                ),
             },
         };
-        Self { path, value, load_error }
+        Self {
+            path,
+            value,
+            load_error,
+        }
     }
 
     pub(crate) fn path(&self) -> &Path {
@@ -51,7 +66,9 @@ impl JsonStore {
     /// Sets `key`, creating intermediate objects (and replacing non-objects
     /// in the way).
     pub(crate) fn set(&mut self, key: &str, value: impl Serialize) {
-        let Ok(value) = serde_json::to_value(value) else { return };
+        let Ok(value) = serde_json::to_value(value) else {
+            return;
+        };
         let mut parts = key.split('.').peekable();
         let mut node = &mut self.value;
         while let Some(part) = parts.next() {
@@ -63,7 +80,9 @@ impl JsonStore {
                 map.insert(part.to_string(), value);
                 return;
             }
-            node = map.entry(part.to_string()).or_insert_with(|| Value::Object(Map::new()));
+            node = map
+                .entry(part.to_string())
+                .or_insert_with(|| Value::Object(Map::new()));
         }
     }
 
@@ -86,7 +105,8 @@ mod tests {
     use super::*;
 
     fn temp_file(name: &str) -> PathBuf {
-        let dir = std::env::temp_dir().join(format!("forge-host-test-{}-{name}", std::process::id()));
+        let dir =
+            std::env::temp_dir().join(format!("forge-host-test-{}-{name}", std::process::id()));
         let _ = std::fs::remove_dir_all(&dir);
         dir.join("store.json")
     }
@@ -104,13 +124,23 @@ mod tests {
         let mut store = JsonStore::load(path.clone());
         store.set("panels.cockpit.dock", "right");
         store.set("ui_font_size", 13);
-        assert_eq!(store.get::<String>("panels.cockpit.dock").as_deref(), Some("right"));
+        assert_eq!(
+            store.get::<String>("panels.cockpit.dock").as_deref(),
+            Some("right")
+        );
         store.save().unwrap();
 
         let reloaded = JsonStore::load(path);
         assert_eq!(reloaded.get::<u32>("ui_font_size"), Some(13));
-        assert_eq!(reloaded.get::<String>("panels.cockpit.dock").as_deref(), Some("right"));
-        assert_eq!(reloaded.get::<u32>("panels.cockpit.dock"), None, "wrong type reads as missing");
+        assert_eq!(
+            reloaded.get::<String>("panels.cockpit.dock").as_deref(),
+            Some("right")
+        );
+        assert_eq!(
+            reloaded.get::<u32>("panels.cockpit.dock"),
+            None,
+            "wrong type reads as missing"
+        );
     }
 
     #[test]
@@ -125,6 +155,9 @@ mod tests {
         store.save().unwrap();
 
         assert!(path.with_extension("invalid.json").exists());
-        assert_eq!(JsonStore::load(path).get::<String>("theme").as_deref(), Some("dark"));
+        assert_eq!(
+            JsonStore::load(path).get::<String>("theme").as_deref(),
+            Some("dark")
+        );
     }
 }

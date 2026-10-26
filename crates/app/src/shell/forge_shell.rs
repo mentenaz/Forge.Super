@@ -24,9 +24,9 @@ use std::rc::Rc;
 use forge_host::{DockPosition, Host, NoticeKind, Settings, State, Workspace};
 
 use gpui::{
-    Anchor, AnyElement, App, AppContext, Context, Entity, FocusHandle, Focusable, InteractiveElement,
-    IntoElement, KeyBinding, ParentElement, Pixels, Point, Render, ScrollHandle, Styled, Task, Window, actions,
-    SharedString, div, px,
+    Anchor, AnyElement, App, AppContext, Context, Entity, FocusHandle, Focusable,
+    InteractiveElement, IntoElement, KeyBinding, ParentElement, Pixels, Point, Render,
+    ScrollHandle, SharedString, Styled, Task, Window, actions, div, px,
 };
 use gpui_component::{
     Root, Theme,
@@ -164,7 +164,13 @@ impl ForgeShell {
         window.defer(cx, move |window, cx| {
             let _ = weak.update(cx, |shell, cx| {
                 for error in errors.into_iter().flatten() {
-                    shell.notify(NoticeKind::Warning, "Couldn't read a settings file", error, window, cx);
+                    shell.notify(
+                        NoticeKind::Warning,
+                        "Couldn't read a settings file",
+                        error,
+                        window,
+                        cx,
+                    );
                 }
             });
         });
@@ -193,13 +199,16 @@ impl ForgeShell {
         }
 
         // Redraw when the workspace's files or git state change.
-        cx.observe(&Workspace::model(cx), |_, _, cx| cx.notify()).detach();
+        cx.observe(&Workspace::model(cx), |_, _, cx| cx.notify())
+            .detach();
 
         // Theme, font sizes: save whatever changes them (title bar toggle,
         // menu, Appearance settings).
-        cx.observe_global::<Theme>(|_, cx| super::theme::save(cx)).detach();
+        cx.observe_global::<Theme>(|_, cx| super::theme::save(cx))
+            .detach();
 
-        let project_search = cx.new(|cx| InputState::new(window, cx).placeholder("Search recent projects…"));
+        let project_search =
+            cx.new(|cx| InputState::new(window, cx).placeholder("Search recent projects…"));
         cx.subscribe(&project_search, |this, _, event: &InputEvent, cx| {
             if let InputEvent::Change = event {
                 this.project_picker_selected = 0;
@@ -209,9 +218,11 @@ impl ForgeShell {
         .detach();
 
         // Redraw the status bar's pending-keystrokes indicator mid-chord.
-        cx.observe_pending_input(window, |_, _, cx| cx.notify()).detach();
+        cx.observe_pending_input(window, |_, _, cx| cx.notify())
+            .detach();
 
-        let worktree_search = cx.new(|cx| InputState::new(window, cx).placeholder(Self::worktree_placeholder()));
+        let worktree_search =
+            cx.new(|cx| InputState::new(window, cx).placeholder(Self::worktree_placeholder()));
         cx.subscribe(&worktree_search, |this, _, event: &InputEvent, cx| {
             if let InputEvent::Change = event {
                 this.worktree_picker_selected = 0;
@@ -270,7 +281,12 @@ impl ForgeShell {
         cx.notify();
     }
 
-    fn on_split_active_tab(&mut self, _: &SplitActiveTab, window: &mut Window, cx: &mut Context<Self>) {
+    fn on_split_active_tab(
+        &mut self,
+        _: &SplitActiveTab,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
         self.duplicate_active_tab_in_split(window, cx);
     }
 
@@ -282,11 +298,21 @@ impl ForgeShell {
         self.toggle_dock(DockPosition::Left, cx);
     }
 
-    fn on_toggle_right_dock(&mut self, _: &ToggleRightDock, _: &mut Window, cx: &mut Context<Self>) {
+    fn on_toggle_right_dock(
+        &mut self,
+        _: &ToggleRightDock,
+        _: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
         self.toggle_dock(DockPosition::Right, cx);
     }
 
-    fn on_toggle_bottom_dock(&mut self, _: &ToggleBottomDock, _: &mut Window, cx: &mut Context<Self>) {
+    fn on_toggle_bottom_dock(
+        &mut self,
+        _: &ToggleBottomDock,
+        _: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
         self.toggle_dock(DockPosition::Bottom, cx);
     }
 
@@ -398,7 +424,9 @@ impl Render for ForgeShell {
             .on_action(cx.listener(Self::on_go_back))
             .on_action(cx.listener(Self::on_go_forward))
             .on_action(cx.listener(Self::on_toggle_zoom))
-            .on_action(cx.listener(|this, _: &DeploySearch, window, cx| this.open_project_search(window, cx)))
+            .on_action(cx.listener(|this, _: &DeploySearch, window, cx| {
+                this.open_project_search(window, cx)
+            }))
             .on_modifiers_changed(cx.listener(Self::on_modifiers_changed))
             .child(self.render_title_bar(window, cx))
             .children(self.render_menu_bar_row(cx))

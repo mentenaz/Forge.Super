@@ -54,7 +54,11 @@ pub(super) fn build_panels(window: &mut Window, cx: &mut App) -> Vec<PanelEntry>
         .into_iter()
         .map(|(info, build)| {
             let position = Settings::panel(info.id, "dock", cx).unwrap_or(info.default_dock);
-            PanelEntry { view: build(window, cx), position, info }
+            PanelEntry {
+                view: build(window, cx),
+                position,
+                info,
+            }
         })
         .collect();
     panels.sort_by_key(|p| p.info.order);
@@ -70,14 +74,32 @@ pub(super) fn load_dock(
     cx: &mut App,
 ) -> Dock {
     let key = position.key();
-    let in_dock = |id: &str| panels.iter().find(|p| p.position == position && p.info.id == id).map(|p| p.info.id);
+    let in_dock = |id: &str| {
+        panels
+            .iter()
+            .find(|p| p.position == position && p.info.id == id)
+            .map(|p| p.info.id)
+    };
     let active = State::get::<String>(&format!("docks.{key}.active"), cx)
         .and_then(|id| in_dock(&id))
         .or_else(|| default_active.and_then(in_dock))
-        .or_else(|| panels.iter().find(|p| p.position == position).map(|p| p.info.id));
-    let open = State::get(&format!("docks.{key}.open"), cx).unwrap_or(default_open) && active.is_some();
-    let size = State::get::<f32>(&format!("docks.{key}.size"), cx).map(px).unwrap_or(default_size(position));
-    Dock { open, active, size, resize: cx.new(|_| ResizableState::default()) }
+        .or_else(|| {
+            panels
+                .iter()
+                .find(|p| p.position == position)
+                .map(|p| p.info.id)
+        });
+    let open =
+        State::get(&format!("docks.{key}.open"), cx).unwrap_or(default_open) && active.is_some();
+    let size = State::get::<f32>(&format!("docks.{key}.size"), cx)
+        .map(px)
+        .unwrap_or(default_size(position));
+    Dock {
+        open,
+        active,
+        size,
+        resize: cx.new(|_| ResizableState::default()),
+    }
 }
 
 impl ForgeShell {
@@ -98,7 +120,10 @@ impl ForgeShell {
     }
 
     /// The panels in `position`, in button order.
-    pub(super) fn panels_in(&self, position: DockPosition) -> impl Iterator<Item = &PanelEntry> + '_ {
+    pub(super) fn panels_in(
+        &self,
+        position: DockPosition,
+    ) -> impl Iterator<Item = &PanelEntry> + '_ {
         self.panels.iter().filter(move |p| p.position == position)
     }
 
@@ -120,11 +145,17 @@ impl ForgeShell {
     /// Records a dock's size after the user drags its divider.
     pub(super) fn save_dock_size(&mut self, position: DockPosition, size: Pixels, cx: &mut App) {
         self.dock_mut(position).size = size;
-        State::set(&format!("docks.{}.size", position.key()), f32::from(size), cx);
+        State::set(
+            &format!("docks.{}.size", position.key()),
+            f32::from(size),
+            cx,
+        );
     }
 
     pub(super) fn toggle_panel(&mut self, id: &str, cx: &mut Context<Self>) {
-        let (Some(position), Some(id)) = (self.panel_position(id), self.panel(id).map(|p| p.info.id)) else {
+        let (Some(position), Some(id)) =
+            (self.panel_position(id), self.panel(id).map(|p| p.info.id))
+        else {
             return;
         };
         let visible = self.is_panel_visible(id);
@@ -177,7 +208,8 @@ impl ForgeShell {
     /// Move `id` to another dock and show it there. Saved as the panel's
     /// `dock` setting.
     pub(super) fn move_panel(&mut self, id: &str, to: DockPosition, cx: &mut Context<Self>) {
-        let (Some(from), Some(id)) = (self.panel_position(id), self.panel(id).map(|p| p.info.id)) else {
+        let (Some(from), Some(id)) = (self.panel_position(id), self.panel(id).map(|p| p.info.id))
+        else {
             return;
         };
         if from == to {
@@ -203,7 +235,11 @@ impl ForgeShell {
 
     /// The open dock's active panel, framed with a border on the side
     /// facing the tab area. `None` while the dock is closed.
-    pub(super) fn render_dock(&self, position: DockPosition, cx: &mut Context<Self>) -> Option<AnyElement> {
+    pub(super) fn render_dock(
+        &self,
+        position: DockPosition,
+        cx: &mut Context<Self>,
+    ) -> Option<AnyElement> {
         let dock = self.dock(position);
         if !dock.open {
             return None;

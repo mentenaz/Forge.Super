@@ -30,15 +30,21 @@ pub struct Watcher {
 /// Whether a path inside `.git` matters: object and log writes don't change
 /// what the UI shows, refs/HEAD/index do.
 fn is_relevant_git_path(path: &Path) -> bool {
-    let mut after_git = path.components().skip_while(|c| c != &Component::Normal(".git".as_ref())).skip(1);
+    let mut after_git = path
+        .components()
+        .skip_while(|c| c != &Component::Normal(".git".as_ref()))
+        .skip(1);
     match after_git.next() {
-        Some(Component::Normal(first)) => !matches!(first.to_str(), Some("objects" | "logs" | "lfs")),
+        Some(Component::Normal(first)) => {
+            !matches!(first.to_str(), Some("objects" | "logs" | "lfs"))
+        }
         _ => true,
     }
 }
 
 fn in_git_dir(path: &Path) -> bool {
-    path.components().any(|c| c == Component::Normal(".git".as_ref()))
+    path.components()
+        .any(|c| c == Component::Normal(".git".as_ref()))
 }
 
 /// Watches `root` recursively and calls `on_change` (on a background thread)
@@ -101,7 +107,10 @@ mod tests {
         let dir = tempfile::tempdir().unwrap();
         let batches = Arc::new(Mutex::new(Vec::<Changes>::new()));
         let sink = batches.clone();
-        let _watcher = watch(dir.path(), move |changes| sink.lock().unwrap().push(changes)).unwrap();
+        let _watcher = watch(dir.path(), move |changes| {
+            sink.lock().unwrap().push(changes)
+        })
+        .unwrap();
 
         std::thread::sleep(Duration::from_millis(100));
         std::fs::write(dir.path().join("a.txt"), "1").unwrap();

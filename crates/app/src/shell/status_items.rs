@@ -11,8 +11,9 @@ use gpui::{
     Window, div, prelude::FluentBuilder, px,
 };
 use gpui_component::{
-    ActiveTheme, Icon, IconName, Sizable, h_flex,
+    ActiveTheme, Icon, IconName, Sizable,
     button::{Button, ButtonVariants},
+    h_flex,
     kbd::Kbd,
     menu::{DropdownMenu, PopupMenuItem},
     spinner::Spinner,
@@ -49,7 +50,11 @@ impl ForgeShell {
         let view_title: SharedString = title.to_string().into();
         let build: BuildTabView = Rc::new(move |_, cx| {
             let title = view_title.clone();
-            cx.new(|_| PlaceholderView { title, description: description.into() }).into()
+            cx.new(|_| PlaceholderView {
+                title,
+                description: description.into(),
+            })
+            .into()
         });
         let spec = TabSpec {
             key: key.to_string().into(),
@@ -65,7 +70,14 @@ impl ForgeShell {
 
     pub(super) fn open_project_search(&mut self, window: &mut Window, cx: &mut Context<Self>) {
         let note = "Project-wide search arrives with the editor (phase 5).";
-        self.open_placeholder_tab("project-search", "Project Search", Icon::new(IconName::Search), note, window, cx);
+        self.open_placeholder_tab(
+            "project-search",
+            "Project Search",
+            Icon::new(IconName::Search),
+            note,
+            window,
+            cx,
+        );
     }
 
     pub(super) fn render_search_button(&self, cx: &mut Context<Self>) -> AnyElement {
@@ -79,7 +91,12 @@ impl ForgeShell {
     }
 
     fn set_server_state(&mut self, name: &str, state: LspState, cx: &mut Context<Self>) {
-        for server in self.status.language_servers.iter_mut().filter(|s| name.is_empty() || s.name == name) {
+        for server in self
+            .status
+            .language_servers
+            .iter_mut()
+            .filter(|s| name.is_empty() || s.name == name)
+        {
             server.state = state;
             if state != LspState::Warning {
                 server.message = None;
@@ -93,8 +110,12 @@ impl ForgeShell {
     fn restart_servers(&mut self, name: SharedString, cx: &mut Context<Self>) {
         self.set_server_state(&name, LspState::Starting, cx);
         cx.spawn(async move |this, cx| {
-            cx.background_executor().timer(Duration::from_millis(1200)).await;
-            let _ = this.update(cx, |this, cx| this.set_server_state(&name, LspState::Running, cx));
+            cx.background_executor()
+                .timer(Duration::from_millis(1200))
+                .await;
+            let _ = this.update(cx, |this, cx| {
+                this.set_server_state(&name, LspState::Running, cx)
+            });
         })
         .detach();
     }
@@ -208,12 +229,20 @@ impl ForgeShell {
                 .child(n.to_string())
         };
         let content = if errors == 0 && warnings == 0 {
-            h_flex().child(Icon::new(IconName::Check).xsmall().text_color(cx.theme().muted_foreground))
+            h_flex().child(
+                Icon::new(IconName::Check)
+                    .xsmall()
+                    .text_color(cx.theme().muted_foreground),
+            )
         } else {
             h_flex()
                 .gap_2()
-                .when(errors > 0, |el| el.child(count(IconName::CircleX, errors, cx.theme().danger)))
-                .when(warnings > 0, |el| el.child(count(IconName::TriangleAlert, warnings, cx.theme().warning)))
+                .when(errors > 0, |el| {
+                    el.child(count(IconName::CircleX, errors, cx.theme().danger))
+                })
+                .when(warnings > 0, |el| {
+                    el.child(count(IconName::TriangleAlert, warnings, cx.theme().warning))
+                })
         };
 
         Button::new("diagnostics")
@@ -222,8 +251,16 @@ impl ForgeShell {
             .tooltip("Project Diagnostics")
             .child(content.text_xs())
             .on_click(cx.listener(|this, _, window, cx| {
-                let note = "The diagnostics list arrives with the language server support (phase 5).";
-                this.open_placeholder_tab("diagnostics", "Diagnostics", Icon::new(IconName::TriangleAlert), note, window, cx);
+                let note =
+                    "The diagnostics list arrives with the language server support (phase 5).";
+                this.open_placeholder_tab(
+                    "diagnostics",
+                    "Diagnostics",
+                    Icon::new(IconName::TriangleAlert),
+                    note,
+                    window,
+                    cx,
+                );
             }))
             .into_any_element()
     }
@@ -235,7 +272,11 @@ impl ForgeShell {
         if conflicts == 0 {
             return None;
         }
-        let label = if conflicts == 1 { "1 merge conflict".to_string() } else { format!("{conflicts} merge conflicts") };
+        let label = if conflicts == 1 {
+            "1 merge conflict".to_string()
+        } else {
+            format!("{conflicts} merge conflicts")
+        };
         Some(
             Button::new("merge-conflicts")
                 .ghost()
@@ -261,13 +302,22 @@ impl ForgeShell {
             h_flex()
                 .gap_1()
                 .child(Spinner::new().xsmall().icon(IconName::Loader))
-                .child(div().text_xs().text_color(cx.theme().muted_foreground).child(message))
+                .child(
+                    div()
+                        .text_xs()
+                        .text_color(cx.theme().muted_foreground)
+                        .child(message),
+                )
                 .into_any_element(),
         )
     }
 
     /// The first half of a chord while it waits for the rest, e.g. `Ctrl+K`.
-    pub(super) fn render_pending_keys(&self, window: &Window, cx: &mut Context<Self>) -> Option<AnyElement> {
+    pub(super) fn render_pending_keys(
+        &self,
+        window: &Window,
+        cx: &mut Context<Self>,
+    ) -> Option<AnyElement> {
         let keys = window.pending_input_keystrokes()?;
         let text = keys.iter().map(Kbd::format).collect::<Vec<_>>().join(" ");
         Some(self.status_text(format!("{text} …"), cx))
@@ -289,16 +339,18 @@ impl ForgeShell {
                 let mut menu = menu.scrollable(true).max_h(px(360.));
                 for language in &languages {
                     let (this, name) = (this.clone(), language.clone());
-                    menu = menu.item(PopupMenuItem::new(language.clone()).checked(*language == current).on_click(
-                        move |_, _, cx| {
-                            let name = name.clone();
-                            this.update(cx, |this, cx| {
-                                this.status.editor.language = name;
-                                cx.notify();
-                            })
-                            .ok();
-                        },
-                    ));
+                    menu = menu.item(
+                        PopupMenuItem::new(language.clone())
+                            .checked(*language == current)
+                            .on_click(move |_, _, cx| {
+                                let name = name.clone();
+                                this.update(cx, |this, cx| {
+                                    this.status.editor.language = name;
+                                    cx.notify();
+                                })
+                                .ok();
+                            }),
+                    );
                 }
                 menu
             })

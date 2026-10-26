@@ -11,15 +11,16 @@ use gpui::{
     Styled, Window, actions, px,
 };
 use gpui_component::{
-    ActiveTheme, IconName, Sizable, Theme, ThemeMode, h_flex,
+    ActiveTheme, IconName, Sizable, Theme, ThemeMode,
     button::{Button, ButtonVariants},
-    input,
+    h_flex, input,
     menu::{DropdownMenu, PopupMenu},
 };
 
 use super::ForgeShell;
 use super::forge_shell::{
-    GoBack, GoForward, SplitActiveTab, ToggleBottomDock, ToggleLeftDock, ToggleRightDock, ToggleZoom,
+    GoBack, GoForward, SplitActiveTab, ToggleBottomDock, ToggleLeftDock, ToggleRightDock,
+    ToggleZoom,
 };
 use super::notifications::NoticeKind;
 
@@ -68,7 +69,10 @@ fn menus() -> Vec<Menu> {
         Menu::new(BRAND).items([
             MenuItem::action(format!("About {BRAND}"), About),
             MenuItem::separator(),
-            MenuItem::submenu(Menu::new("Settings").items([MenuItem::action("Toggle Light/Dark Theme", ToggleTheme)])),
+            MenuItem::submenu(
+                Menu::new("Settings")
+                    .items([MenuItem::action("Toggle Light/Dark Theme", ToggleTheme)]),
+            ),
             MenuItem::separator(),
             MenuItem::action(format!("Quit {BRAND}"), Quit),
         ]),
@@ -109,7 +113,10 @@ fn menus() -> Vec<Menu> {
             MenuItem::action("Debugger Panel", ToggleDebugger),
             MenuItem::action("Git Panel", ToggleGit),
         ]),
-        Menu::new("Go").items([MenuItem::action("Back", GoBack), MenuItem::action("Forward", GoForward)]),
+        Menu::new("Go").items([
+            MenuItem::action("Back", GoBack),
+            MenuItem::action("Forward", GoForward),
+        ]),
         Menu::new("Help").items([MenuItem::action(format!("About {BRAND}"), About)]),
     ]
 }
@@ -140,7 +147,11 @@ impl ForgeShell {
             .icon(IconName::Menu)
             .tooltip("Open Application Menu")
             .dropdown_menu(move |menu, _, _| {
-                let first = menus().into_iter().next().map(|m| m.items).unwrap_or_default();
+                let first = menus()
+                    .into_iter()
+                    .next()
+                    .map(|m| m.items)
+                    .unwrap_or_default();
                 // Actions go to the shell, where their handlers are.
                 add_items(menu.action_context(focus_handle.clone()), first)
             })
@@ -169,21 +180,38 @@ impl ForgeShell {
     /// Hooks up the menu's actions on the shell's root element.
     pub(super) fn on_menu_actions(&self, root: Div, cx: &mut Context<Self>) -> Div {
         root.on_action(cx.listener(|this, _: &About, window, cx| {
-            let message = format!("Version {}. Built on gpui and gpui-component.", env!("CARGO_PKG_VERSION"));
-            this.notify(NoticeKind::Info, format!("Mentenaz {BRAND}"), message, window, cx);
+            let message = format!(
+                "Version {}. Built on gpui and gpui-component.",
+                env!("CARGO_PKG_VERSION")
+            );
+            this.notify(
+                NoticeKind::Info,
+                format!("Mentenaz {BRAND}"),
+                message,
+                window,
+                cx,
+            );
         }))
         .on_action(|_: &Quit, _, cx: &mut App| cx.quit())
         .on_action(cx.listener(|this, _: &OpenFolder, _, cx| this.open_folder(cx)))
-        .on_action(cx.listener(|this, _: &OpenRecent, window, cx| this.open_project_picker(window, cx)))
+        .on_action(
+            cx.listener(|this, _: &OpenRecent, window, cx| this.open_project_picker(window, cx)),
+        )
         .on_action(cx.listener(|this, _: &CloseActiveTab, _, cx| {
             if let Some(idx) = this.active_index(this.active_group) {
                 this.close(this.active_group, idx, cx);
             }
         }))
-        .on_action(cx.listener(|this, _: &CloseAllTabs, _, cx| this.close_all(this.active_group, cx)))
+        .on_action(
+            cx.listener(|this, _: &CloseAllTabs, _, cx| this.close_all(this.active_group, cx)),
+        )
         .on_action(cx.listener(|this, _: &ToggleAllDocks, _, cx| this.toggle_all_docks(cx)))
         .on_action(|_: &ToggleTheme, window: &mut Window, cx: &mut App| {
-            let mode = if Theme::global(cx).mode.is_dark() { ThemeMode::Light } else { ThemeMode::Dark };
+            let mode = if Theme::global(cx).mode.is_dark() {
+                ThemeMode::Light
+            } else {
+                ThemeMode::Dark
+            };
             Theme::change(mode, Some(window), cx);
         })
         .on_action(cx.listener(|this, _: &ToggleExplorer, _, cx| this.toggle_panel("explorer", cx)))

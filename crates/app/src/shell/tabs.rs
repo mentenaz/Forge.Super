@@ -77,7 +77,8 @@ impl ForgeShell {
     }
 
     pub(super) fn active_tab_in(&self, group: TabGroup) -> Option<&WorkspaceTab> {
-        self.active_index(group).and_then(|idx| self.group(group).get(idx))
+        self.active_index(group)
+            .and_then(|idx| self.group(group).get(idx))
     }
 
     pub(super) fn split_open(&self) -> bool {
@@ -88,7 +89,12 @@ impl ForgeShell {
     pub(super) fn find_tab(&self, id: usize) -> Option<(TabGroup, usize)> {
         [TabGroup::Primary, TabGroup::Split]
             .into_iter()
-            .find_map(|g| self.group(g).iter().position(|t| t.id == id).map(|idx| (g, idx)))
+            .find_map(|g| {
+                self.group(g)
+                    .iter()
+                    .position(|t| t.id == id)
+                    .map(|idx| (g, idx))
+            })
     }
 
     fn next_id(&mut self) -> usize {
@@ -200,7 +206,12 @@ impl ForgeShell {
             retain
         });
         *active = active_id.and_then(|id| tabs.iter().position(|t| t.id == id));
-        let open: Vec<usize> = self.tabs.iter().chain(&self.split_tabs).map(|t| t.id).collect();
+        let open: Vec<usize> = self
+            .tabs
+            .iter()
+            .chain(&self.split_tabs)
+            .map(|t| t.id)
+            .collect();
         self.tab_mru.retain(|id| open.contains(id));
         self.normalize_groups();
         cx.notify();
@@ -239,8 +250,16 @@ impl ForgeShell {
 
     /// Move tab `id` to position `to_idx` in `to` (a drag and drop). Dropping
     /// it among the pinned tabs pins it; dropping it after them unpins it.
-    pub(super) fn move_tab(&mut self, id: usize, to: TabGroup, to_idx: usize, cx: &mut Context<Self>) {
-        let Some((from, from_idx)) = self.find_tab(id) else { return };
+    pub(super) fn move_tab(
+        &mut self,
+        id: usize,
+        to: TabGroup,
+        to_idx: usize,
+        cx: &mut Context<Self>,
+    ) {
+        let Some((from, from_idx)) = self.find_tab(id) else {
+            return;
+        };
         let (tabs, active) = self.group_mut(from);
         let mut tab = tabs.remove(from_idx);
         *active = active_after_remove(*active, from_idx, tabs.len());
@@ -258,20 +277,36 @@ impl ForgeShell {
 
     /// Open a second, independent instance of the primary tab at `idx` in
     /// the split pane.
-    pub(super) fn duplicate_tab_in_split(&mut self, idx: usize, window: &mut Window, cx: &mut Context<Self>) {
-        let Some(tab) = self.tabs.get(idx).cloned() else { return };
+    pub(super) fn duplicate_tab_in_split(
+        &mut self,
+        idx: usize,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
+        let Some(tab) = self.tabs.get(idx).cloned() else {
+            return;
+        };
         if let Some(existing) = self.split_tabs.iter().position(|t| t.key == tab.key) {
             self.split_active_tab = Some(existing);
         } else {
             let view = (tab.build)(window, cx);
-            let duplicate = WorkspaceTab { id: self.next_id(), view, pinned: false, ..tab };
+            let duplicate = WorkspaceTab {
+                id: self.next_id(),
+                view,
+                pinned: false,
+                ..tab
+            };
             self.push_or_activate(TabGroup::Split, duplicate);
         }
         self.active_group = TabGroup::Split;
         cx.notify();
     }
 
-    pub(super) fn duplicate_active_tab_in_split(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+    pub(super) fn duplicate_active_tab_in_split(
+        &mut self,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
         if let Some(idx) = self.active_tab {
             self.duplicate_tab_in_split(idx, window, cx);
         }
@@ -295,7 +330,9 @@ impl ForgeShell {
 
     /// Swap the active primary tab with the active split tab.
     pub(super) fn swap_panes(&mut self, cx: &mut Context<Self>) {
-        let (Some(p), Some(s)) = (self.active_tab, self.split_active_tab) else { return };
+        let (Some(p), Some(s)) = (self.active_tab, self.split_active_tab) else {
+            return;
+        };
         if p < self.tabs.len() && s < self.split_tabs.len() {
             std::mem::swap(&mut self.tabs[p], &mut self.split_tabs[s]);
             self.normalize_groups();
