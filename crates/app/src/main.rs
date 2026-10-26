@@ -8,6 +8,25 @@ use crate::assets::Assets;
 use crate::shell::ForgeShell;
 
 fn main() {
+    // `<binary> --git-credential <operation>`: run as git's credential
+    // helper, for git started in one of the IDE's terminals. Handled before
+    // anything else; git appends the operation (`get`) as an argument.
+    let mut args = std::env::args().skip(1);
+    if args.next().as_deref() == Some(forge_git_credential::HELPER_ARG) {
+        std::process::exit(forge_git_credential::run_helper(args.next().as_deref()));
+    }
+
+    // Answers git's credential requests from the IDE's terminals with the
+    // account the workspace uses.
+    match std::env::current_exe() {
+        Ok(program) => {
+            if let Err(error) = forge_git_credential::start_server(&program) {
+                log::error!("could not start the git credential helper: {error}");
+            }
+        }
+        Err(error) => log::error!("could not start the git credential helper: {error}"),
+    }
+
     let app = gpui_platform::application().with_assets(Assets);
 
     app.run(|cx: &mut App| {
@@ -17,6 +36,7 @@ fn main() {
         forge_host::init(cx);
         explorer_ui::init(cx);
         git_ui::init(cx);
+        script_runner_ui::init(cx);
         node_ui::init(cx);
         dotnet_ui::init(cx);
         shell::init(cx);

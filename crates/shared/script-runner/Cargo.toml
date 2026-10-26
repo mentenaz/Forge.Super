@@ -1,0 +1,13 @@
+[package]
+name = "forge-script-runner"
+description = "Running one shell command with live output: the shell, stopping it with everything it started, the IDE's runtimes on its PATH, output clean-up, and checks for what panels splice into a command line. No gpui."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish = false
+
+[dependencies]
+forge-ide-env.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true

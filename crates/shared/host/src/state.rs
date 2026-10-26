@@ -26,7 +26,10 @@ impl Global for State {}
 
 impl State {
     pub(crate) fn load(path: PathBuf) -> Self {
-        Self { store: JsonStore::load(path), generation: 0 }
+        Self {
+            store: JsonStore::load(path),
+            generation: 0,
+        }
     }
 
     /// Why `state.json` couldn't be read at startup, if it couldn't.
@@ -50,7 +53,7 @@ impl State {
 
         cx.spawn(async move |cx| {
             cx.background_executor().timer(SAVE_DELAY).await;
-            let _ = cx.update(|cx| {
+            cx.update(|cx| {
                 let state = cx.global_mut::<State>();
                 if state.generation == generation {
                     let _ = state.store.save();

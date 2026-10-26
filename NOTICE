@@ -20,6 +20,9 @@ which contains:
   - gpui-flow, Copyright Adib, MIT
 Their licence texts ship with Mentenaz.GPUI.
 
+crates/shared/git-credential/src/socket/windows.rs is adapted from Zed's
+`net` crate (Copyright Zed Industries, Inc., GPL-3.0-or-later).
+
 Third-party Rust dependencies are under their own licences (MIT, Apache-2.0,
 BSD, ISC, Zlib, MPL-2.0 and similar); see each crate's metadata.
 

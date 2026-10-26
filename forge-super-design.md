@@ -341,7 +341,7 @@ Measured by counting references to Zed crates per panel:
 1. **Host API in `crates/shared/`:** **Done (2026-10-26)**, see §13.9. The few things panels currently take from Zed (workspace root, open a tab, toggle a dock, saved state and settings, notifications), implemented by the shell. Includes a minimal `branding` crate, pulled forward from phase 2 because settings paths need it. Design in §13.
 1.5. **Workspace backbone (option C, decided 2026-10-26): Done (2026-10-26)**, see §13.10. a thin backbone of our own in `crates/shared/` (file tree via the `ignore` crate, file watching via `notify`, git via the `git` CLI), behind the host API, so Explorer, the Git panel and the worktree/branch pickers are real before Zed is vendored. Replaced by Zed's `project` in phase 5 without changing panel code. See §13.5.
 2. **Foundation: Done (2026-10-26)**, see §13.11. Pin gpui `rev`, `cargo deny`/`cargo about` (`branding` moved to phase 1; `LICENSE`/`NOTICE` done 2026-10-26).
-3. **Shared code:** script runner, `runtime_processes`, `ide_env`, `git_credential`.
+3. **Shared code: Done (2026-10-26)**, see §13.12. Script Runner, `runtime_processes`, `ide_env`, `git_credential`.
 4. **Port the gpui-component panels** onto the host API, backends into `<name>-core`, panels into `<name>-ui`, in this order:
    1. Cockpit, Processes, Script Runner
    2. Node, Python, .NET, Rust, with their package managers
@@ -410,7 +410,7 @@ Renaming the dev build to the release name later is a one-line change here.
 **Saved state** (`state.json` in `data_dir`): a small key/value store for things that aren't settings: dock open/closed and sizes, active panel per dock, recent projects, a panel's last selection. Replaces Zed's `db::kvp`.
 
 **Shared services**, so feature crates don't depend on each other:
-- `run_command(CommandSpec)`: whichever panel registered as the command runner (Script Runner, phase 4.1) runs it; until then the host reports it isn't available.
+- `run_command(CommandSpec)`: the Script Runner runs it and shows the output. Returns `Err(Busy)` while another command runs (one at a time) or `Err(NoRunner)`, otherwise a task that finishes with the `CommandOutcome` (exit code, stopped, failed to start). `is_command_running` lets a panel hold back its buttons. `CommandSpec::env` adds variables for that run only.
 - The IDE's runtime `PATH` (`ide_env`) moves to `crates/shared/` with Script Runner in phase 3; the host only exposes the service hook in phase 1.
 
 ### 13.5 Workspace (slot for phase 1.5)
@@ -450,6 +450,14 @@ Known issue: widening the left dock also narrows the right dock, because gpui-co
 - Unmaintained crates fail the check wherever they are; each known one is an explicit, reasoned exception in `deny.toml`. Mentenaz.GPUI `7bbf750` replaced `instant` (→ `web-time`) and its own `paste` (→ `pastey`), and aligned `resvg` to one version. Remaining exceptions, all through dependencies: `bincode` (via `syntect`; bundled data only), `rustybuzz` and `ttf-parser` (SVG/font stack), `rustls-pemfile` (Zed's `reqwest` fork), `paste` (via `metal`, Apple only), `zbus_names`/`zvariant`/`zvariant_derive` (Linux accessibility). Mentenaz.GPUI `9533769` builds `image` with only the formats gpui handles (png, jpeg, webp, gif, bmp, tiff, ico, pnm): no OpenEXR (exr → pulp → paste) or AVIF encoder (rav1e), and no `rayon` feature, whose weak features kept those crates in the lock. 34 crates left the lock, and `paste` is no longer in Windows builds.
 - `about.toml` + `about.hbs`: `THIRD_PARTY_LICENSES.md` (≈730 crates) is generated at release time, not committed.
 - `.gitattributes` stores text files with LF.
+
+### 13.12 Phase 3 result (2026-10-26)
+- `forge-ide-env` (`crates/shared/ide-env`): the IDE's runtimes first on the `PATH` of processes it starts, and per-repository git settings and credentials. Ported unchanged apart from naming; the credential-helper socket variable is `<branding env_prefix>_GIT_CREDENTIAL_SOCKET`, so dev and release builds don't share it.
+- `forge-git-credential` (`crates/shared/git-credential`): the git credential helper. The binary answers `--git-credential get` before anything else starts; the app serves requests on an AF_UNIX socket (Windows code adapted from Zed's `net`, credited in `NOTICE`). An end-to-end test runs `git credential fill` against the real binary: a login, fall-through when no account is set, and `quit=1` when it is signed out.
+- `forge-runtime-processes` (no gpui: scan, labels, redaction, stopping a process tree) and `forge-runtime-processes-ui` (`ProcessList`, used by the Node and Python panels in phase 4).
+- `forge-script-runner` (no gpui): the command-line checks panels use, output parsing (ANSI, links, SPFx debug query string), and the runner (pwsh with a cmd fallback, stderr interleaved, a stop that kills the whole tree).
+- `script-runner-ui`: the panel, ported from the Zed edition; its working folder follows the workspace root, Enter runs the command, and it is the host's command runner. Headless gpui tests drive `Host::run_command`.
+- No Zed services or branding in any of it.
 
 ### 13.8 Not in phase 1
 Files and git (phase 1.5), language servers, the editor, real panel contents (phase 4), live settings reload, a settings UI.

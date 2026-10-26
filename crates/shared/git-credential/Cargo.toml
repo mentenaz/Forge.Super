@@ -1,0 +1,15 @@
+[package]
+name = "forge-git-credential"
+description = "The IDE's own git credential helper: answers github.com credentials for git run in the IDE's terminals, from the account the workspace uses. No gpui."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish = false
+
+[dependencies]
+forge-ide-env.workspace = true
+log.workspace = true
+tempfile.workspace = true
+
+[target.'cfg(windows)'.dependencies]
+windows = { workspace = true, features = ["Win32_Foundation", "Win32_Networking_WinSock"] }

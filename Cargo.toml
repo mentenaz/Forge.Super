@@ -31,9 +31,18 @@ ignore = "0.4"
 notify = { git = "https://github.com/zed-industries/notify", rev = "d842f16b2716bd60f09caf3ae3a894237ab38f54" }
 tempfile = "3"
 futures = "0.3"
+log = "0.4"
+sysinfo = { version = "0.39", default-features = false, features = ["system"] }
+# The version gpui uses on Windows, so there is one copy.
+windows = "0.62"
 
 branding = { path = "crates/branding" }
+forge-git-credential = { path = "crates/shared/git-credential" }
 forge-host = { path = "crates/shared/host" }
+forge-ide-env = { path = "crates/shared/ide-env" }
+forge-runtime-processes = { path = "crates/shared/runtime-processes" }
+forge-runtime-processes-ui = { path = "crates/shared/runtime-processes-ui" }
+forge-script-runner = { path = "crates/shared/script-runner" }
 forge-workspace = { path = "crates/shared/workspace" }
 
 node-core = { path = "crates/features/node/core" }
@@ -42,3 +51,4 @@ dotnet-core = { path = "crates/features/dotnet/core" }
 dotnet-ui = { path = "crates/features/dotnet/ui" }
 explorer-ui = { path = "crates/features/explorer/ui" }
 git-ui = { path = "crates/features/git/ui" }
+script-runner-ui = { path = "crates/features/script-runner/ui" }

@@ -1,0 +1,10 @@
+[package]
+name = "forge-runtime-processes"
+description = "The running processes of one runtime (Node.js, Python): what each is, whose it is, and stopping one with everything it started. No gpui."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish = false
+
+[dependencies]
+sysinfo.workspace = true

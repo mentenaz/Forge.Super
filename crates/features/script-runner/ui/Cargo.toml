@@ -1,0 +1,18 @@
+[package]
+name = "script-runner-ui"
+description = "The Script Runner panel: runs a shell command with live output, and is the host's command runner for the other panels."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish = false
+
+[dependencies]
+forge-host.workspace = true
+forge-script-runner.workspace = true
+futures.workspace = true
+gpui.workspace = true
+gpui-component.workspace = true
+
+[dev-dependencies]
+gpui = { workspace = true, features = ["test-support"] }
+tempfile.workspace = true

@@ -8,7 +8,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 The source of truth for decisions and phase order is `forge-super-design.md` (§2 decisions, §12.6 phases). `forge-super-struktuur.md` (Afrikaans) is the earlier structure write-up it supersedes; kept for history.
 
-Status: phases 0 (shell), 1 (host API, `branding`), 1.5 (workspace backbone, Explorer, Git panel) and 2 (foundation: pinned gpui and toolchain, `cargo deny`, `cargo about`) are done. Other panels are still placeholders; next is phase 3, the shared code (Script Runner, `runtime_processes`, `ide_env`, `git_credential`), then porting the Zed edition's panels (phase 4).
+Status: phases 0 (shell), 1 (host API, `branding`), 1.5 (workspace backbone, Explorer, Git panel), 2 (foundation: pinned gpui and toolchain, `cargo deny`, `cargo about`) and 3 (shared code: `ide-env`, `git-credential`, `runtime-processes`, Script Runner) are done. Other panels are still placeholders; next is porting the Zed edition's panels (phase 4).
 
 Repositories: this one is `github.com/mentenaz/Forge.Super` (public, GPL-3.0-or-later). The UI library is `github.com/mentenaz/Mentenaz.GPUI` (Apache-2.0), cloned at `E:\mentenaz\gpui`.
 
@@ -24,6 +24,8 @@ cargo deny check                         # licences, advisories, duplicate crate
 cargo about generate about.hbs -o THIRD_PARTY_LICENSES.md   # dependency licence texts, for releases
 ```
 
+The shell (`crates/app`) and `forge-host` are not rustfmt-formatted (they use longer lines), so don't run `cargo fmt` on those packages; it rewrites every file. Formatting a new crate of your own is fine.
+
 The toolchain is pinned in `rust-toolchain.toml` (Rust 1.98.1, the same as the Zed edition). Run `cargo deny check` after adding or bumping dependencies; it must pass before a release.
 
 ## Architecture
@@ -37,7 +39,9 @@ Workspace members are `crates/app` plus the globs `crates/features/*/core` and `
 - `crates/shared/host` (`forge-host`): the host API (design doc §13). Panels register with `register_panel(PanelInfo, build)`; they reach the shell only through `Host` (open a tab, show/toggle a panel, notify, run a command), observe `Workspace::model`, and keep settings/state with `Settings` / `State` (dotted keys, e.g. `panels.<id>.dock`). A feature `ui` crate exposes `pub fn init(cx)` that registers its panel.
 - Start-up order matters (`crates/app/src/main.rs`): `gpui_component::init` → `forge_host::init` → each feature's `init` → `shell::init` (which registers placeholders only for ids no feature claimed).
 - `crates/shared/workspace` (`forge-workspace`): the thin workspace backbone, no gpui: `tree::list_dir` (one folder, respects `.gitignore`), `watch::watch` (batched file events), `git::Repository` (branches, worktrees, status, stage/unstage/commit via the `git` CLI, no console window, never prompts). `forge_host::Workspace` wraps it as an observable model (folder listings, `GitState`, git operations returning `Task<Result<(), GitError>>`). Replaced by Zed's `project` in phase 5 behind the same API.
-- Current features: `explorer` (file tree + read-only file view, registered as `Host`'s file opener), `git` (Git panel), `node`, `dotnet` (templates). Feature crates without domain code have only a `ui` crate.
+- Other shared crates (no gpui unless noted): `forge-ide-env` (the IDE's runtimes on a started process's `PATH`; per-repository git settings and credentials), `forge-git-credential` (git credential helper: the binary answers `--git-credential get`, handled first in `main.rs`), `forge-runtime-processes` (+ `-ui`, gpui: `ProcessList`), `forge-script-runner` (running one shell command, output parsing, and `command::check_*` for anything spliced into a command line).
+- Panels run commands with `Host::run_command(CommandSpec)` (one at a time; `Err(Busy)` otherwise), which the Script Runner (`script-runner-ui`) shows; the returned task finishes with the `CommandOutcome`.
+- Current features: `explorer` (file tree + read-only file view, registered as `Host`'s file opener), `git` (Git panel), `script-runner` (Script Runner panel), `node`, `dotnet` (templates). Feature crates without domain code have only a `ui` crate.
 
 ### The shell (`crates/app/src/shell/`)
 

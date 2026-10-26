@@ -19,7 +19,10 @@ pub mod state;
 mod store;
 pub mod workspace;
 
-pub use host::{CommandSpec, Host, HostDelegate, NoticeKind, TabRequest};
+pub use host::{
+    CommandError, CommandOutcome, CommandRunner, CommandSpec, Host, HostDelegate, NoticeKind,
+    TabRequest,
+};
 pub use panel::{BuildView, DockPosition, PanelInfo, PanelRegistry, register_panel};
 pub use settings::Settings;
 pub use state::State;
@@ -29,8 +32,13 @@ use gpui::App;
 
 /// Installs the host's globals and loads `settings.json` and `state.json`.
 pub fn init(cx: &mut App) {
-    cx.set_global(Settings::load(branding::settings_file()));
-    cx.set_global(State::load(branding::state_file()));
+    init_at(branding::settings_file(), branding::state_file(), cx);
+}
+
+/// [`init`] with the settings and state in other files, for tests.
+pub fn init_at(settings_file: std::path::PathBuf, state_file: std::path::PathBuf, cx: &mut App) {
+    cx.set_global(Settings::load(settings_file));
+    cx.set_global(State::load(state_file));
     cx.set_global(PanelRegistry::default());
     cx.set_global(Host::default());
     workspace::init(cx);

@@ -11,8 +11,9 @@ use gpui::{
     Styled, Window, div, prelude::FluentBuilder, px,
 };
 use gpui_component::{
-    ActiveTheme, Disableable, Icon, IconName, Selectable, Sizable, h_flex,
+    ActiveTheme, Disableable, Icon, IconName, Selectable, Sizable,
     button::{Button, ButtonVariants},
+    h_flex,
     scroll::ScrollableElement,
 };
 
@@ -48,7 +49,11 @@ impl Render for DraggedTab {
 fn folder_hints(tabs: &[WorkspaceTab]) -> Vec<Option<String>> {
     let parents: Vec<Option<Vec<&str>>> = tabs
         .iter()
-        .map(|t| t.path.as_ref().map(|p| p.split('/').rev().skip(1).collect()))
+        .map(|t| {
+            t.path
+                .as_ref()
+                .map(|p| p.split('/').rev().skip(1).collect())
+        })
         .collect();
     let hint = |idx: usize, depth: usize| -> Option<String> {
         let parents = parents[idx].as_ref()?;
@@ -69,7 +74,10 @@ fn folder_hints(tabs: &[WorkspaceTab]) -> Vec<Option<String>> {
             let max_depth = parents[i].as_ref().map_or(0, |p| p.len());
             let collides = tabs[i].path.is_some()
                 && (0..tabs.len()).any(|j| {
-                    j != i && tabs[j].path.is_some() && tabs[j].title == tabs[i].title && hints[j] == hints[i]
+                    j != i
+                        && tabs[j].path.is_some()
+                        && tabs[j].title == tabs[i].title
+                        && hints[j] == hints[i]
                 });
             if collides && depth[i] < max_depth {
                 depth[i] += 1;
@@ -94,14 +102,19 @@ impl ForgeShell {
             TabGroup::Primary => "tab-bar-scroll-primary",
             TabGroup::Split => "tab-bar-scroll-split",
         };
-        let scroll_handle = window.use_keyed_state(key, cx, |_, _| ScrollHandle::default()).read(cx).clone();
+        let scroll_handle = window
+            .use_keyed_state(key, cx, |_, _| ScrollHandle::default())
+            .read(cx)
+            .clone();
 
         let hints = folder_hints(self.group(group));
         let tab_count = self.group(group).len();
-        let mut items = Vec::with_capacity(tab_count);
-        for idx in 0..tab_count {
-            items.push(self.render_tab(group, idx, hints[idx].clone(), cx));
-        }
+        let items: Vec<_> = hints
+            .into_iter()
+            .enumerate()
+            .take(tab_count)
+            .map(|(idx, hint)| self.render_tab(group, idx, hint, cx))
+            .collect();
 
         h_flex()
             .id(match group {
@@ -131,7 +144,9 @@ impl ForgeShell {
                             .flex_1()
                             .min_w(px(24.))
                             .h_full()
-                            .drag_over::<DraggedTab>(|style, _, _, cx| style.bg(cx.theme().drop_target))
+                            .drag_over::<DraggedTab>(|style, _, _, cx| {
+                                style.bg(cx.theme().drop_target)
+                            })
                             .on_drop(cx.listener(move |this, dragged: &DraggedTab, _, cx| {
                                 this.move_tab(dragged.id, group, tab_count, cx);
                             })),
@@ -175,7 +190,9 @@ impl ForgeShell {
                 .icon(Icon::empty().path("icons/zed_split.svg"))
                 .tooltip("Split Right")
                 .disabled(self.active_tab.is_none())
-                .on_click(cx.listener(|this, _, window, cx| this.duplicate_active_tab_in_split(window, cx))),
+                .on_click(cx.listener(|this, _, window, cx| {
+                    this.duplicate_active_tab_in_split(window, cx)
+                })),
             TabGroup::Split => Button::new("close-split-pane")
                 .ghost()
                 .xsmall()
@@ -196,18 +213,32 @@ impl ForgeShell {
                 Button::new(("zoom", group as usize))
                     .ghost()
                     .xsmall()
-                    .icon(if zoomed { IconName::Minimize } else { IconName::Maximize })
+                    .icon(if zoomed {
+                        IconName::Minimize
+                    } else {
+                        IconName::Maximize
+                    })
                     .tooltip(if zoomed { "Zoom Out" } else { "Zoom In" })
                     .selected(zoomed)
                     .on_click(cx.listener(|this, _, _, cx| this.toggle_zoom(cx))),
             )
     }
 
-    fn render_tab(&self, group: TabGroup, idx: usize, hint: Option<String>, cx: &mut Context<Self>) -> AnyElement {
+    fn render_tab(
+        &self,
+        group: TabGroup,
+        idx: usize,
+        hint: Option<String>,
+        cx: &mut Context<Self>,
+    ) -> AnyElement {
         let tab = &self.group(group)[idx];
         let is_active = self.active_index(group) == Some(idx);
         let hover_group: SharedString = format!("tab-{}", tab.id).into();
-        let foreground = if is_active { cx.theme().tab_active_foreground } else { cx.theme().muted_foreground };
+        let foreground = if is_active {
+            cx.theme().tab_active_foreground
+        } else {
+            cx.theme().muted_foreground
+        };
         let id = tab.id;
 
         // Close button, shown on hover. A dirty tab shows a dot in its place
@@ -276,7 +307,9 @@ impl ForgeShell {
             .border_color(cx.theme().border)
             // The active tab covers the bar's bottom border so it merges
             // into the content below.
-            .when(is_active, |el| el.bg(cx.theme().tab_active).mb(px(-1.)).pb(px(1.)))
+            .when(is_active, |el| {
+                el.bg(cx.theme().tab_active).mb(px(-1.)).pb(px(1.))
+            })
             .when(!is_active, |el| el.bg(cx.theme().tab))
             .text_sm()
             .text_color(foreground)
@@ -297,9 +330,13 @@ impl ForgeShell {
                     cx.notify();
                 }),
             )
-            .on_drag(DraggedTab { id, title: tab.title.clone() }, |dragged, _, _, cx: &mut App| {
-                cx.new(|_| dragged.clone())
-            })
+            .on_drag(
+                DraggedTab {
+                    id,
+                    title: tab.title.clone(),
+                },
+                |dragged, _, _, cx: &mut App| cx.new(|_| dragged.clone()),
+            )
             .drag_over::<DraggedTab>(|style, _, _, cx| style.bg(cx.theme().drop_target))
             .on_drop(cx.listener(move |this, dragged: &DraggedTab, _, cx| {
                 this.move_tab(dragged.id, group, idx, cx);
@@ -310,7 +347,12 @@ impl ForgeShell {
             })
             .child(div().max_w(px(200.)).truncate().child(tab.title.clone()))
             .when_some(hint, |el, hint| {
-                el.child(div().text_color(cx.theme().muted_foreground).text_xs().child(hint))
+                el.child(
+                    div()
+                        .text_color(cx.theme().muted_foreground)
+                        .text_xs()
+                        .child(hint),
+                )
             })
             .child(trailing)
             .into_any_element()
