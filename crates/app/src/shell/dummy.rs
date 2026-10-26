@@ -6,14 +6,33 @@ use gpui::SharedString;
 
 use super::notifications::{NoticeEntry, NoticeKind};
 
+/// A language server's state, as Zed's language server menu shows it.
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub(super) enum LspState {
-    Indexing { percent: u32 },
-    Ready,
+    Starting,
+    Running,
+    Warning,
+    Error,
+    Stopped,
+}
+
+impl LspState {
+    pub(super) fn label(self) -> &'static str {
+        match self {
+            LspState::Starting => "Starting…",
+            LspState::Running => "Running",
+            LspState::Warning => "Warning",
+            LspState::Error => "Error",
+            LspState::Stopped => "Stopped",
+        }
+    }
 }
 
 pub(super) struct LspStatus {
     pub(super) name: SharedString,
     pub(super) state: LspState,
+    /// The server's last message, shown with "View Message".
+    pub(super) message: Option<SharedString>,
 }
 
 /// What the active editor reports about its buffer.
@@ -44,6 +63,11 @@ pub(super) struct ShellStatus {
     pub(super) errors: usize,
     pub(super) warnings: usize,
     pub(super) language_servers: Vec<LspStatus>,
+    /// The activity indicator's message (progress from language servers,
+    /// downloads, …), if anything is in progress.
+    pub(super) activity: Option<SharedString>,
+    /// What the language picker offers (the languages built into Zed).
+    pub(super) languages: Vec<SharedString>,
     pub(super) editor: EditorStatus,
 }
 
@@ -67,16 +91,28 @@ impl ShellStatus {
             ],
             errors: 2,
             warnings: 5,
-            language_servers: vec![
-                LspStatus {
-                    name: "rust-analyzer".into(),
-                    state: LspState::Indexing { percent: 42 },
-                },
-                LspStatus {
-                    name: "typescript".into(),
-                    state: LspState::Ready,
-                },
-            ],
+            language_servers: [
+                ("rust-analyzer", LspState::Running, None),
+                ("taplo", LspState::Running, None),
+                ("tombi", LspState::Running, None),
+                ("md-image-path-lsp", LspState::Running, None),
+                ("markdown-oxide", LspState::Warning, Some("2 links in forge-super-design.md could not be resolved.")),
+            ]
+            .into_iter()
+            .map(|(name, state, message)| LspStatus {
+                name: name.into(),
+                state,
+                message: message.map(Into::into),
+            })
+            .collect(),
+            activity: Some("rust-analyzer: Indexing… 42%".into()),
+            languages: [
+                "Bash", "C", "C++", "CSS", "Go", "JSON", "Markdown", "Plain Text", "Python", "Rust", "TOML",
+                "TSX", "TypeScript", "YAML",
+            ]
+            .into_iter()
+            .map(Into::into)
+            .collect(),
             editor: EditorStatus {
                 line: 12,
                 column: 8,

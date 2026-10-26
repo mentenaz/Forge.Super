@@ -27,9 +27,10 @@ BSD, ISC, Zlib, MPL-2.0 and similar); see each crate's metadata.
 Icons
 -------------------------------------------------------------------------------
 
-crates/app/assets/icons/zed_database_zap.svg, zed_debug.svg, zed_file_rust.svg,
-zed_file_tree.svg, zed_git_branch.svg, zed_git_worktree.svg, zed_list_tree.svg,
-zed_pin.svg, zed_split.svg, zed_terminal_alt.svg
+crates/app/assets/icons/zed_bolt_outlined.svg, zed_circle.svg,
+zed_database_zap.svg, zed_debug.svg, zed_file_rust.svg, zed_file_tree.svg,
+zed_git_branch.svg, zed_git_worktree.svg, zed_list_tree.svg, zed_pin.svg,
+zed_split.svg, zed_terminal_alt.svg
   From the Zed editor's icon set (Zed Industries, Inc.), which is based on
   Lucide. Licensed under the Lucide licence below.
 

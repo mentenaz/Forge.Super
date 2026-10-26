@@ -8,6 +8,7 @@ mod pane;
 mod panels;
 mod recent_projects;
 mod status_bar;
+mod status_items;
 mod tab_bar;
 mod tab_context_menu;
 mod tab_switcher;

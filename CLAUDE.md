@@ -40,7 +40,7 @@ Laid out like the Zed edition: title bar, left/right/bottom docks, per-pane tab 
 - `docks.rs`, `panels.rs`: Zed's dock model (three docks, several panels each, one shown); `PanelId` lists every panel with its title, icon and default dock. `PlaceholderPanel`/`PlaceholderView` stand in for real views.
 - `tabs.rs`, `pane.rs`, `tab_bar.rs`, `tab_context_menu.rs`, `tab_switcher.rs`, `nav_history.rs`: tab state and operations, panes and breadcrumbs, the tab strip (drag and drop, pinning, folder hints), the right-click menu, Ctrl+Tab switcher, back/forward.
 - `title_bar.rs`, `app_menu.rs`, `recent_projects.rs`, `worktree_picker.rs`: title bar, application menu (☰ or menu bar row), project and worktree pickers.
-- `status_bar.rs`, `notifications.rs`: status bar (dock buttons, diagnostics, language servers, editor info), toasts and the notification centre.
+- `status_bar.rs`, `status_items.rs`, `notifications.rs`: status bar layout (Zed's item order, dock buttons); its items (project search, language server menu, diagnostics, active file, activity, pending keystrokes, language picker); toasts and the notification centre.
 - `theme.rs`: default theme (Forge Dark from `assets/themes/forge.json`) and font sizes (13px UI, 15px mono, matching the Zed edition).
 - `dummy.rs`: **all fake data** (git, language servers, editor, files, notifications). Replace it piece by piece as the host API and feature crates land; don't add fake data elsewhere.
 

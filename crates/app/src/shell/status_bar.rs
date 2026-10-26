@@ -1,27 +1,27 @@
 //! The full-width bottom bar, laid out like the Zed edition's:
-//! - left: the left dock's panel buttons, diagnostics, language servers;
-//! - right: the active editor's `line:column` and language (Zed's format), the
-//!   bottom dock's panel buttons, the right dock's panel buttons, and the
-//!   notification bell.
+//! - left: the left dock's panel buttons, then project search, the language
+//!   server menu, diagnostics, the active file and the activity indicator;
+//! - right: pending keystrokes and the editor's `line:column`, line ending,
+//!   language and encoding (Zed's order), then the bottom and right docks'
+//!   panel buttons and the notification bell.
 //!
-//! Right-clicking a panel button moves that panel to another dock.
+//! The items themselves are in `status_items.rs`. Right-clicking a panel
+//! button moves that panel to another dock.
 
-use gpui::{AnyElement, Context, InteractiveElement, IntoElement, ParentElement, Styled, div};
+use gpui::{AnyElement, Context, InteractiveElement, IntoElement, ParentElement, Styled, Window, div};
 use gpui_component::{
-    ActiveTheme, Icon, IconName, Selectable, Sizable, h_flex,
+    ActiveTheme, Selectable, Sizable,
     button::{Button, ButtonVariants},
     menu::{ContextMenuExt, PopupMenuItem},
     separator::Separator,
-    spinner::Spinner,
     status_bar::StatusBar,
 };
 
 use super::ForgeShell;
-use super::dummy::LspState;
 use super::panels::{DockPosition, PanelId};
 
 impl ForgeShell {
-    pub(super) fn render_status_bar(&self, cx: &mut Context<Self>) -> StatusBar {
+    pub(super) fn render_status_bar(&self, window: &Window, cx: &mut Context<Self>) -> StatusBar {
         let mut bar = StatusBar::new();
 
         for button in self.panel_buttons(DockPosition::Left, cx) {
@@ -29,20 +29,29 @@ impl ForgeShell {
         }
         bar = bar
             .left(Separator::vertical())
-            .left(self.render_diagnostics(cx))
-            .left(self.render_language_servers(cx));
+            .left(self.render_search_button(cx))
+            .left(self.render_lsp_button(cx))
+            .left(self.render_diagnostics(cx));
+        if let Some(file) = self.render_active_file(cx) {
+            bar = bar.left(file);
+        }
+        if let Some(activity) = self.render_activity(cx) {
+            bar = bar.left(activity);
+        }
 
+        if let Some(keys) = self.render_pending_keys(window, cx) {
+            bar = bar.right(keys);
+        }
         // Editor details, in Zed's format: `line:column` and the language,
         // plus line ending and encoding only when they aren't the defaults
         // (LF, UTF-8). Only while a tab is open.
         if self.active_tab.is_some() {
             let editor = &self.status.editor;
-            bar = bar
-                .right(self.status_text(format!("{}:{}", editor.line, editor.column), cx))
-                .right(self.status_text(editor.language.clone(), cx));
+            bar = bar.right(self.status_text(format!("{}:{}", editor.line, editor.column), cx));
             if editor.line_ending != "LF" {
                 bar = bar.right(self.status_text(editor.line_ending.clone(), cx));
             }
+            bar = bar.right(self.render_language_button(cx));
             if editor.encoding != "UTF-8" {
                 bar = bar.right(self.status_text(editor.encoding.clone(), cx));
             }
@@ -106,61 +115,11 @@ impl ForgeShell {
             .into_any_element()
     }
 
-    fn status_text(&self, text: impl Into<gpui::SharedString>, cx: &mut Context<Self>) -> AnyElement {
+    pub(super) fn status_text(&self, text: impl Into<gpui::SharedString>, cx: &mut Context<Self>) -> AnyElement {
         div()
             .text_xs()
             .text_color(cx.theme().muted_foreground)
             .child(text.into())
-            .into_any_element()
-    }
-
-    fn render_diagnostics(&self, cx: &mut Context<Self>) -> AnyElement {
-        let errors = self.status.errors;
-        let warnings = self.status.warnings;
-        let count = |icon: IconName, n: usize, color| {
-            h_flex()
-                .gap_0p5()
-                .child(div().text_color(color).child(Icon::new(icon).xsmall()))
-                .child(n.to_string())
-        };
-
-        Button::new("diagnostics")
-            .ghost()
-            .xsmall()
-            .tooltip("Project diagnostics")
-            .child(
-                h_flex()
-                    .gap_2()
-                    .text_xs()
-                    .child(count(IconName::CircleX, errors, cx.theme().danger))
-                    .child(count(IconName::TriangleAlert, warnings, cx.theme().warning)),
-            )
-            .into_any_element()
-    }
-
-    fn render_language_servers(&self, cx: &mut Context<Self>) -> AnyElement {
-        let servers = self.status.language_servers.iter().map(|server| {
-            let state = match server.state {
-                LspState::Indexing { percent } => h_flex()
-                    .gap_1()
-                    .child(Spinner::new().xsmall().icon(IconName::Loader))
-                    .child(format!("{percent}%")),
-                LspState::Ready => h_flex().child(
-                    div()
-                        .text_color(cx.theme().success)
-                        .child(Icon::new(IconName::CircleCheck).xsmall()),
-                ),
-            };
-            h_flex()
-                .gap_1()
-                .child(div().text_color(cx.theme().muted_foreground).child(server.name.clone()))
-                .child(state)
-        });
-
-        h_flex()
-            .gap_3()
-            .text_xs()
-            .children(servers)
             .into_any_element()
     }
 }

@@ -50,7 +50,8 @@ actions!(
         ToggleBottomDock,
         GoBack,
         GoForward,
-        ToggleZoom
+        ToggleZoom,
+        DeploySearch
     ]
 );
 
@@ -78,6 +79,7 @@ pub fn init(cx: &mut App) {
         KeyBinding::new("alt-left", GoBack, None),
         KeyBinding::new("alt-right", GoForward, None),
         KeyBinding::new("shift-escape", ToggleZoom, None),
+        KeyBinding::new("ctrl-shift-f", DeploySearch, None),
     ]);
 }
 
@@ -162,6 +164,9 @@ impl ForgeShell {
             }
         })
         .detach();
+
+        // Redraw the status bar's pending-keystrokes indicator mid-chord.
+        cx.observe_pending_input(window, |_, _, cx| cx.notify()).detach();
 
         let worktree_search = cx.new(|cx| InputState::new(window, cx).placeholder(Self::worktree_placeholder()));
         cx.subscribe(&worktree_search, |this, _, event: &InputEvent, cx| {
@@ -369,11 +374,12 @@ impl Render for ForgeShell {
             .on_action(cx.listener(Self::on_go_back))
             .on_action(cx.listener(Self::on_go_forward))
             .on_action(cx.listener(Self::on_toggle_zoom))
+            .on_action(cx.listener(|this, _: &DeploySearch, window, cx| this.open_project_search(window, cx)))
             .on_modifiers_changed(cx.listener(Self::on_modifiers_changed))
             .child(self.render_title_bar(window, cx))
             .children(self.render_menu_bar_row(cx))
             .child(div().flex_1().min_h_0().child(main_area))
-            .child(self.render_status_bar(cx))
+            .child(self.render_status_bar(window, cx))
             .children(self.render_tab_context_menu(window, cx))
             .children(self.render_tab_switcher_overlay(window, cx))
             .children(sheet_layer)

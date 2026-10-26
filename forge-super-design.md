@@ -338,8 +338,8 @@ Measured by counting references to Zed crates per panel:
 
 ### 12.6 Phases
 0. **Shell look:** settle the gpui-component frame (title bar, left panels, tab bar, split view, bottom docks, status bar). Placeholders are enough for the contents. **Done (2026-10-26):** title bar with application menu, project, worktree and branch pickers; Zed's three-dock model; per-pane tab bars (split, pinning, drag and drop, folder hints, breadcrumbs); Zed-style status bar and notifications; Forge Dark theme at 13px.
-1. **Host API in `crates/shared/`:** the few things panels currently take from Zed (workspace root, open a tab, toggle a dock, saved state and settings, notifications), implemented by the shell.
-2. **Foundation:** pin gpui `rev`, `branding` crate, `LICENSE`/`NOTICE`, `cargo deny`.
+1. **Host API in `crates/shared/`:** the few things panels currently take from Zed (workspace root, open a tab, toggle a dock, saved state and settings, notifications), implemented by the shell. Includes a minimal `branding` crate, pulled forward from phase 2 because settings paths need it. Design in §13.
+2. **Foundation:** pin gpui `rev`, `cargo deny`/`cargo about` (`branding` moved to phase 1; `LICENSE`/`NOTICE` done 2026-10-26).
 3. **Shared code:** script runner, `runtime_processes`, `ide_env`, `git_credential`.
 4. **Port the gpui-component panels** onto the host API, backends into `<name>-core`, panels into `<name>-ui`, in this order:
    1. Cockpit, Processes, Script Runner
@@ -363,3 +363,64 @@ Superseded by the phases in 12.6.
 4. Write the `client`, `telemetry`, `agent_settings` stubs and the `title_bar` rewrite in `overrides/`.
 5. Stand up the watcher with `upstream-watch.toml` and `upstream-sync.json`.
 6. Add `LICENSE`, `NOTICE`, `cargo deny` and `cargo about` to CI.
+
+## 13. Phase 1 design: host API and branding (draft for review)
+
+### 13.1 Decisions (2026-10-26)
+- Settings live in **`%APPDATA%\Mentenaz\ForgeSuperDev2`**; state, logs and caches in **`%LOCALAPPDATA%\Mentenaz\ForgeSuperDev2`**. Both are separate from the Zed edition's `%APPDATA%\ForgeSuper` so both can be installed side by side.
+- Settings are **JSON** (`settings.json`), like Zed's: readable and hand-editable.
+- A minimal **`branding`** crate is built now (phase 1), not in phase 2.
+
+### 13.2 New crates
+| Crate | Path | Role |
+|---|---|---|
+| `branding` | `crates/branding` | Product identity and folders. No gpui. |
+| `forge-host` | `crates/shared/host` | The contract between the shell and the panels: panel description, host handle, settings, saved state, shared services. Depends on gpui and gpui-component (it hands out views), not on any feature crate. |
+
+Workspace members gain `crates/branding` and `crates/shared/*`. Feature `ui` crates depend on `forge-host`; `core` crates stay gpui-free and depend on neither.
+
+### 13.3 `branding`
+One `PRODUCT` constant plus folder helpers, so no other crate hard-codes a name or path:
+- `display`: `Mentenaz Forge Super`; `short`: `Forge Super`.
+- `dir`: `Mentenaz\ForgeSuperDev2`.
+- `id`: `dev.mentenaz.forge-super.dev2`; `ipc`: `Forge-Super-Dev2`; `scheme`: `forgesuper-dev2` (reserved, not registered yet). All differ from the Zed edition's (`dev.forge.super`, `Forge-Super-Editor`, `forgesuper`) so the two can't collide.
+- `config_dir()` = `%APPDATA%\Mentenaz\ForgeSuperDev2` (settings.json).
+- `data_dir()` = `%LOCALAPPDATA%\Mentenaz\ForgeSuperDev2` (state.json, logs, later runtimes and caches). Confirmed 2026-10-26.
+- Other platforms: the matching XDG / macOS folders under the same `Mentenaz/ForgeSuperDev2` name.
+
+Renaming the dev build to the release name later is a one-line change here.
+
+### 13.4 `forge-host`
+**Panel description**, replacing Zed's `impl Panel`:
+- `PanelInfo { id, title, icon, tooltip, default_dock, order }`, where `id` is a stable string (`"cockpit"`) used for settings and saved state.
+- A panel registers once at startup with its info and a constructor. The shell builds its docks and status-bar buttons from the registrations, so `PanelId` in `shell/panels.rs` goes away.
+
+**Host handle**, a gpui global the shell installs and panels call:
+- `workspace_root()`, plus a subscription that fires when it changes.
+- `open_tab(spec)`: title, icon, optional path, and a view constructor (the existing `TabSpec`).
+- `show_panel(id)`, `toggle_panel(id)`, `focus_panel(id)`.
+- `notify(kind, title, message)`: toast plus notification-centre entry.
+
+**Settings** (`settings.json` in `config_dir`):
+- Top-level shell keys (`ui_font_size`, `buffer_font_size`, `theme`, `show_menus`, …) and a `panels` object keyed by panel id: `{ "cockpit": { "dock": "right", "button": true, ...panel-specific } }`.
+- Panels read typed settings (`serde` struct with defaults) and update them through the host, which writes the file. Missing or invalid keys fall back to defaults; an unreadable file is reported once as a notification, never a crash.
+- Hand edits are picked up on the next start. Live reloading is a later addition.
+
+**Saved state** (`state.json` in `data_dir`): a small key/value store for things that aren't settings: dock open/closed and sizes, active panel per dock, recent projects, a panel's last selection. Replaces Zed's `db::kvp`.
+
+**Shared services**, so feature crates don't depend on each other:
+- `run_command(CommandSpec)`: whichever panel registered as the command runner (Script Runner, phase 4.1) runs it; until then the host reports it isn't available.
+- The IDE's runtime `PATH` (`ide_env`) moves to `crates/shared/` with Script Runner in phase 3; the host only exposes the service hook in phase 1.
+
+### 13.5 Shell changes
+- Docks and buttons come from panel registrations; dock moves are saved to the panel's `dock` setting.
+- Layout (open docks, sizes, active panels), theme mode, font size and `show_menus` persist between runs.
+- `dummy.rs` keeps only what phase 1 doesn't make real: git (worktrees, branches), language servers, editor info, Explorer's dummy files.
+
+### 13.6 Done when
+- `branding` and `forge-host` exist and build; `settings.json` and `state.json` are created in the folders above.
+- Cockpit (placeholder view for now) is registered through `forge-host` instead of the hard-coded list.
+- Moving a panel to another dock, resizing a dock, switching theme or the menu bar, then restarting, restores all of it.
+
+### 13.7 Not in phase 1
+Git, language servers, the editor, real panel contents (phase 4), live settings reload, a settings UI.
