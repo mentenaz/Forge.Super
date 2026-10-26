@@ -340,7 +340,7 @@ Measured by counting references to Zed crates per panel:
 0. **Shell look:** settle the gpui-component frame (title bar, left panels, tab bar, split view, bottom docks, status bar). Placeholders are enough for the contents. **Done (2026-10-26):** title bar with application menu, project, worktree and branch pickers; Zed's three-dock model; per-pane tab bars (split, pinning, drag and drop, folder hints, breadcrumbs); Zed-style status bar and notifications; Forge Dark theme at 13px.
 1. **Host API in `crates/shared/`:** **Done (2026-10-26)**, see §13.9. The few things panels currently take from Zed (workspace root, open a tab, toggle a dock, saved state and settings, notifications), implemented by the shell. Includes a minimal `branding` crate, pulled forward from phase 2 because settings paths need it. Design in §13.
 1.5. **Workspace backbone (option C, decided 2026-10-26): Done (2026-10-26)**, see §13.10. a thin backbone of our own in `crates/shared/` (file tree via the `ignore` crate, file watching via `notify`, git via the `git` CLI), behind the host API, so Explorer, the Git panel and the worktree/branch pickers are real before Zed is vendored. Replaced by Zed's `project` in phase 5 without changing panel code. See §13.5.
-2. **Foundation:** pin gpui `rev`, `cargo deny`/`cargo about` (`branding` moved to phase 1; `LICENSE`/`NOTICE` done 2026-10-26).
+2. **Foundation: Done (2026-10-26)**, see §13.11. Pin gpui `rev`, `cargo deny`/`cargo about` (`branding` moved to phase 1; `LICENSE`/`NOTICE` done 2026-10-26).
 3. **Shared code:** script runner, `runtime_processes`, `ide_env`, `git_credential`.
 4. **Port the gpui-component panels** onto the host API, backends into `<name>-core`, panels into `<name>-ui`, in this order:
    1. Cockpit, Processes, Script Runner
@@ -443,6 +443,13 @@ Known issue: widening the left dock also narrows the right dock, because gpui-co
 - `explorer-ui`: file tree coloured by git status, opening files read-only in gpui-component's code editor (no syntax colours yet: Mentenaz.GPUI's tree-sitter highlighting isn't wired up).
 - `git-ui`: Git panel with Merge Conflicts / Staged / Changes, stage and unstage, commit.
 - Verified on a scratch repository: live updates from outside changes, git's own error messages surfaced (e.g. switching branch during a merge), worktree creation, stage and commit.
+
+### 13.11 Phase 2 result (2026-10-26)
+- gpui pinned with `rev = 78684c9…` on all four crates; toolchain pinned to Rust 1.98.1 (`rust-toolchain.toml`, same as the Zed edition).
+- `deny.toml`: licence allow-list (GPL-3.0-compatible, as the Zed edition's), git sources limited to `mentenaz`, `zed-industries` and `gfx-rs/wgpu`, duplicates warn. `cargo deny check` passes: no vulnerabilities, licences and sources ok.
+- Unmaintained crates fail only when our own crates use them directly. Currently nine come in through Mentenaz.GPUI and are its to replace: `bincode` (via `syntect`, gpui-base), `instant` (gpui-base), `paste` (gpui-component), `rustybuzz` (via `resvg`, gpui-component), `ttf-parser` (via `cosmic-text`, gpui_wgpu), `rustls-pemfile` (Zed's `reqwest` fork), `zbus_names`/`zvariant`/`zvariant_derive` (Linux accessibility). All say "no safe upgrade available" today.
+- `about.toml` + `about.hbs`: `THIRD_PARTY_LICENSES.md` (≈730 crates) is generated at release time, not committed.
+- `.gitattributes` stores text files with LF.
 
 ### 13.8 Not in phase 1
 Files and git (phase 1.5), language servers, the editor, real panel contents (phase 4), live settings reload, a settings UI.

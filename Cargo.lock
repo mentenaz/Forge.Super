@@ -926,7 +926,7 @@ dependencies = [
 [[package]]
 name = "collections"
 version = "0.1.0"
-source = "git+https://github.com/mentenaz/Mentenaz.GPUI.git#78684c9bd7e0f906a438965fcc4e15f95f7e1022"
+source = "git+https://github.com/mentenaz/Mentenaz.GPUI.git?rev=78684c9bd7e0f906a438965fcc4e15f95f7e1022#78684c9bd7e0f906a438965fcc4e15f95f7e1022"
 dependencies = [
  "gpui_util",
  "indexmap",
@@ -1255,7 +1255,7 @@ dependencies = [
 [[package]]
 name = "derive_refineable"
 version = "0.1.0"
-source = "git+https://github.com/mentenaz/Mentenaz.GPUI.git#78684c9bd7e0f906a438965fcc4e15f95f7e1022"
+source = "git+https://github.com/mentenaz/Mentenaz.GPUI.git?rev=78684c9bd7e0f906a438965fcc4e15f95f7e1022#78684c9bd7e0f906a438965fcc4e15f95f7e1022"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -2105,7 +2105,7 @@ dependencies = [
 [[package]]
 name = "gpui"
 version = "0.2.2"
-source = "git+https://github.com/mentenaz/Mentenaz.GPUI.git#78684c9bd7e0f906a438965fcc4e15f95f7e1022"
+source = "git+https://github.com/mentenaz/Mentenaz.GPUI.git?rev=78684c9bd7e0f906a438965fcc4e15f95f7e1022#78684c9bd7e0f906a438965fcc4e15f95f7e1022"
 dependencies = [
  "accesskit",
  "anyhow",
@@ -2169,7 +2169,7 @@ dependencies = [
 [[package]]
 name = "gpui-base"
 version = "0.5.2"
-source = "git+https://github.com/mentenaz/Mentenaz.GPUI.git#78684c9bd7e0f906a438965fcc4e15f95f7e1022"
+source = "git+https://github.com/mentenaz/Mentenaz.GPUI.git?rev=78684c9bd7e0f906a438965fcc4e15f95f7e1022#78684c9bd7e0f906a438965fcc4e15f95f7e1022"
 dependencies = [
  "aho-corasick",
  "anyhow",
@@ -2201,7 +2201,7 @@ dependencies = [
 [[package]]
 name = "gpui-component"
 version = "0.5.2"
-source = "git+https://github.com/mentenaz/Mentenaz.GPUI.git#78684c9bd7e0f906a438965fcc4e15f95f7e1022"
+source = "git+https://github.com/mentenaz/Mentenaz.GPUI.git?rev=78684c9bd7e0f906a438965fcc4e15f95f7e1022#78684c9bd7e0f906a438965fcc4e15f95f7e1022"
 dependencies = [
  "anyhow",
  "chrono",
@@ -2246,7 +2246,7 @@ dependencies = [
 [[package]]
 name = "gpui-component-assets"
 version = "0.5.1"
-source = "git+https://github.com/mentenaz/Mentenaz.GPUI.git#78684c9bd7e0f906a438965fcc4e15f95f7e1022"
+source = "git+https://github.com/mentenaz/Mentenaz.GPUI.git?rev=78684c9bd7e0f906a438965fcc4e15f95f7e1022#78684c9bd7e0f906a438965fcc4e15f95f7e1022"
 dependencies = [
  "anyhow",
  "gpui",
@@ -2260,7 +2260,7 @@ dependencies = [
 [[package]]
 name = "gpui-component-macros"
 version = "0.5.1"
-source = "git+https://github.com/mentenaz/Mentenaz.GPUI.git#78684c9bd7e0f906a438965fcc4e15f95f7e1022"
+source = "git+https://github.com/mentenaz/Mentenaz.GPUI.git?rev=78684c9bd7e0f906a438965fcc4e15f95f7e1022#78684c9bd7e0f906a438965fcc4e15f95f7e1022"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -2270,7 +2270,7 @@ dependencies = [
 [[package]]
 name = "gpui_apple"
 version = "0.1.0"
-source = "git+https://github.com/mentenaz/Mentenaz.GPUI.git#78684c9bd7e0f906a438965fcc4e15f95f7e1022"
+source = "git+https://github.com/mentenaz/Mentenaz.GPUI.git?rev=78684c9bd7e0f906a438965fcc4e15f95f7e1022#78684c9bd7e0f906a438965fcc4e15f95f7e1022"
 dependencies = [
  "anyhow",
  "async-task",
@@ -2311,7 +2311,7 @@ dependencies = [
 [[package]]
 name = "gpui_ios"
 version = "0.1.0"
-source = "git+https://github.com/mentenaz/Mentenaz.GPUI.git#78684c9bd7e0f906a438965fcc4e15f95f7e1022"
+source = "git+https://github.com/mentenaz/Mentenaz.GPUI.git?rev=78684c9bd7e0f906a438965fcc4e15f95f7e1022#78684c9bd7e0f906a438965fcc4e15f95f7e1022"
 dependencies = [
  "anyhow",
  "block2 0.6.2",
@@ -2332,7 +2332,7 @@ dependencies = [
 [[package]]
 name = "gpui_linux"
 version = "0.1.0"
-source = "git+https://github.com/mentenaz/Mentenaz.GPUI.git#78684c9bd7e0f906a438965fcc4e15f95f7e1022"
+source = "git+https://github.com/mentenaz/Mentenaz.GPUI.git?rev=78684c9bd7e0f906a438965fcc4e15f95f7e1022#78684c9bd7e0f906a438965fcc4e15f95f7e1022"
 dependencies = [
  "accesskit",
  "accesskit_unix",
@@ -2376,7 +2376,7 @@ dependencies = [
 [[package]]
 name = "gpui_macos"
 version = "0.1.0"
-source = "git+https://github.com/mentenaz/Mentenaz.GPUI.git#78684c9bd7e0f906a438965fcc4e15f95f7e1022"
+source = "git+https://github.com/mentenaz/Mentenaz.GPUI.git?rev=78684c9bd7e0f906a438965fcc4e15f95f7e1022#78684c9bd7e0f906a438965fcc4e15f95f7e1022"
 dependencies = [
  "accesskit",
  "accesskit_macos",
@@ -2415,7 +2415,7 @@ dependencies = [
 [[package]]
 name = "gpui_macros"
 version = "0.1.0"
-source = "git+https://github.com/mentenaz/Mentenaz.GPUI.git#78684c9bd7e0f906a438965fcc4e15f95f7e1022"
+source = "git+https://github.com/mentenaz/Mentenaz.GPUI.git?rev=78684c9bd7e0f906a438965fcc4e15f95f7e1022#78684c9bd7e0f906a438965fcc4e15f95f7e1022"
 dependencies = [
  "heck 0.5.0",
  "proc-macro2",
@@ -2426,7 +2426,7 @@ dependencies = [
 [[package]]
 name = "gpui_platform"
 version = "0.1.0"
-source = "git+https://github.com/mentenaz/Mentenaz.GPUI.git#78684c9bd7e0f906a438965fcc4e15f95f7e1022"
+source = "git+https://github.com/mentenaz/Mentenaz.GPUI.git?rev=78684c9bd7e0f906a438965fcc4e15f95f7e1022#78684c9bd7e0f906a438965fcc4e15f95f7e1022"
 dependencies = [
  "anyhow",
  "console_error_panic_hook",
@@ -2441,7 +2441,7 @@ dependencies = [
 [[package]]
 name = "gpui_shared_string"
 version = "0.1.0"
-source = "git+https://github.com/mentenaz/Mentenaz.GPUI.git#78684c9bd7e0f906a438965fcc4e15f95f7e1022"
+source = "git+https://github.com/mentenaz/Mentenaz.GPUI.git?rev=78684c9bd7e0f906a438965fcc4e15f95f7e1022#78684c9bd7e0f906a438965fcc4e15f95f7e1022"
 dependencies = [
  "schemars",
  "serde",
@@ -2451,7 +2451,7 @@ dependencies = [
 [[package]]
 name = "gpui_util"
 version = "0.1.0"
-source = "git+https://github.com/mentenaz/Mentenaz.GPUI.git#78684c9bd7e0f906a438965fcc4e15f95f7e1022"
+source = "git+https://github.com/mentenaz/Mentenaz.GPUI.git?rev=78684c9bd7e0f906a438965fcc4e15f95f7e1022#78684c9bd7e0f906a438965fcc4e15f95f7e1022"
 dependencies = [
  "anyhow",
  "log",
@@ -2461,7 +2461,7 @@ dependencies = [
 [[package]]
 name = "gpui_web"
 version = "0.1.0"
-source = "git+https://github.com/mentenaz/Mentenaz.GPUI.git#78684c9bd7e0f906a438965fcc4e15f95f7e1022"
+source = "git+https://github.com/mentenaz/Mentenaz.GPUI.git?rev=78684c9bd7e0f906a438965fcc4e15f95f7e1022#78684c9bd7e0f906a438965fcc4e15f95f7e1022"
 dependencies = [
  "anyhow",
  "async-channel",
@@ -2490,7 +2490,7 @@ dependencies = [
 [[package]]
 name = "gpui_wgpu"
 version = "0.1.0"
-source = "git+https://github.com/mentenaz/Mentenaz.GPUI.git#78684c9bd7e0f906a438965fcc4e15f95f7e1022"
+source = "git+https://github.com/mentenaz/Mentenaz.GPUI.git?rev=78684c9bd7e0f906a438965fcc4e15f95f7e1022#78684c9bd7e0f906a438965fcc4e15f95f7e1022"
 dependencies = [
  "anyhow",
  "bytemuck",
@@ -2516,7 +2516,7 @@ dependencies = [
 [[package]]
 name = "gpui_windows"
 version = "0.1.0"
-source = "git+https://github.com/mentenaz/Mentenaz.GPUI.git#78684c9bd7e0f906a438965fcc4e15f95f7e1022"
+source = "git+https://github.com/mentenaz/Mentenaz.GPUI.git?rev=78684c9bd7e0f906a438965fcc4e15f95f7e1022#78684c9bd7e0f906a438965fcc4e15f95f7e1022"
 dependencies = [
  "accesskit",
  "accesskit_windows",
@@ -2733,7 +2733,7 @@ dependencies = [
 [[package]]
 name = "http_client"
 version = "0.1.0"
-source = "git+https://github.com/mentenaz/Mentenaz.GPUI.git#78684c9bd7e0f906a438965fcc4e15f95f7e1022"
+source = "git+https://github.com/mentenaz/Mentenaz.GPUI.git?rev=78684c9bd7e0f906a438965fcc4e15f95f7e1022#78684c9bd7e0f906a438965fcc4e15f95f7e1022"
 dependencies = [
  "anyhow",
  "bytes",
@@ -5129,7 +5129,7 @@ dependencies = [
 [[package]]
 name = "refineable"
 version = "0.1.0"
-source = "git+https://github.com/mentenaz/Mentenaz.GPUI.git#78684c9bd7e0f906a438965fcc4e15f95f7e1022"
+source = "git+https://github.com/mentenaz/Mentenaz.GPUI.git?rev=78684c9bd7e0f906a438965fcc4e15f95f7e1022#78684c9bd7e0f906a438965fcc4e15f95f7e1022"
 dependencies = [
  "derive_refineable",
 ]
@@ -5482,7 +5482,7 @@ dependencies = [
 [[package]]
 name = "scheduler"
 version = "0.1.0"
-source = "git+https://github.com/mentenaz/Mentenaz.GPUI.git#78684c9bd7e0f906a438965fcc4e15f95f7e1022"
+source = "git+https://github.com/mentenaz/Mentenaz.GPUI.git?rev=78684c9bd7e0f906a438965fcc4e15f95f7e1022#78684c9bd7e0f906a438965fcc4e15f95f7e1022"
 dependencies = [
  "async-task",
  "backtrace",
@@ -6009,7 +6009,7 @@ checksum = "13c2bddecc57b384dee18652358fb23172facb8a2c51ccc10d74c157bdea3292"
 [[package]]
 name = "sum_tree"
 version = "0.1.0"
-source = "git+https://github.com/mentenaz/Mentenaz.GPUI.git#78684c9bd7e0f906a438965fcc4e15f95f7e1022"
+source = "git+https://github.com/mentenaz/Mentenaz.GPUI.git?rev=78684c9bd7e0f906a438965fcc4e15f95f7e1022#78684c9bd7e0f906a438965fcc4e15f95f7e1022"
 dependencies = [
  "heapless",
  "rayon",
@@ -8401,7 +8401,7 @@ checksum = "29666d0abbfad1e3dc4dcf6144730dd3a3ab225bbbdac83319345b1b44ccfc1b"
 [[package]]
 name = "ztracing"
 version = "0.1.0"
-source = "git+https://github.com/mentenaz/Mentenaz.GPUI.git#78684c9bd7e0f906a438965fcc4e15f95f7e1022"
+source = "git+https://github.com/mentenaz/Mentenaz.GPUI.git?rev=78684c9bd7e0f906a438965fcc4e15f95f7e1022#78684c9bd7e0f906a438965fcc4e15f95f7e1022"
 dependencies = [
  "tracing",
  "ztracing_macro",
@@ -8410,7 +8410,7 @@ dependencies = [
 [[package]]
 name = "ztracing_macro"
 version = "0.1.0"
-source = "git+https://github.com/mentenaz/Mentenaz.GPUI.git#78684c9bd7e0f906a438965fcc4e15f95f7e1022"
+source = "git+https://github.com/mentenaz/Mentenaz.GPUI.git?rev=78684c9bd7e0f906a438965fcc4e15f95f7e1022#78684c9bd7e0f906a438965fcc4e15f95f7e1022"
 
 [[package]]
 name = "zune-core"

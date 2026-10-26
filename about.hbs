@@ -1,0 +1,26 @@
+# Third-party licences
+
+Mentenaz Forge Super is licensed under GPL-3.0-or-later (see `LICENSE`; origin and asset credits in `NOTICE`). It includes the following Rust crates, under the licences below.
+
+## Overview
+
+{{#each overview}}
+- {{{name}}} ({{count}} crates)
+{{/each}}
+
+## Licences
+
+{{#each licenses}}
+### {{{name}}}
+
+Used by:
+
+{{#each used_by}}
+- [{{crate.name}} {{crate.version}}]({{#if crate.repository}}{{crate.repository}}{{else}}https://crates.io/crates/{{crate.name}}{{/if}})
+{{/each}}
+
+```
+{{{text}}}
+```
+
+{{/each}}

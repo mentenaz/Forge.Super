@@ -1,0 +1,63 @@
+# cargo-deny: run `cargo deny check` before a release (and in CI later).
+# https://embarkstudios.github.io/cargo-deny/
+
+[graph]
+all-features = false
+
+[advisories]
+version = 2
+# Known vulnerabilities (RustSec) fail the check, wherever they are. If one
+# can't be fixed yet, list its id under `ignore` with a comment saying why.
+#
+# Unmaintained crates fail only when our own crates depend on them directly.
+# The ones currently in the build all come through Mentenaz.GPUI (bincode,
+# instant, paste, rustls-pemfile, rustybuzz, ttf-parser, zbus_names,
+# zvariant, zvariant_derive) and are tracked there (design doc §13.11).
+unmaintained = "workspace"
+yanked = "warn"
+ignore = []
+
+[licenses]
+version = 2
+# Licences compatible with shipping Forge Super under GPL-3.0-or-later.
+# The same list the Zed edition's licence tooling accepts.
+allow = [
+    "GPL-3.0-or-later",
+    "Apache-2.0",
+    "Apache-2.0 WITH LLVM-exception",
+    "MIT",
+    "MIT-0",
+    "MPL-2.0",
+    "BSD-2-Clause",
+    "BSD-3-Clause",
+    "0BSD",
+    "ISC",
+    "Zlib",
+    "CC0-1.0",
+    "NCSA",
+    "Unicode-3.0",
+    "BSL-1.0",
+    "OpenSSL",
+    "bzip2-1.0.6",
+    "CDLA-Permissive-2.0",
+]
+confidence-threshold = 0.9
+
+[bans]
+# Two versions of one crate bloat the build; warn, don't fail (many come in
+# through gpui and are fixed there, not here).
+multiple-versions = "warn"
+wildcards = "deny"
+# Workspace path dependencies carry no version; that's fine.
+allow-wildcard-paths = true
+
+[sources]
+unknown-registry = "deny"
+unknown-git = "deny"
+allow-registry = ["https://github.com/rust-lang/crates.io-index"]
+# Our own repositories, and the forks gpui depends on (source code on GitHub,
+# not Zed's hosted services).
+allow-git = ["https://github.com/gfx-rs/wgpu"]
+
+[sources.allow-org]
+github = ["mentenaz", "zed-industries"]

@@ -1,0 +1,6 @@
+# The same Rust as the Zed edition (E:\zed_Source), whose code is vendored in
+# phase 5. Bump in a commit of its own.
+[toolchain]
+channel = "1.98.1"
+profile = "minimal"
+components = ["rustfmt", "clippy"]

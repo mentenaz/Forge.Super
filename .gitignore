@@ -4,3 +4,5 @@
 # Editor folders
 .vs/
 .idea/
+# Generated at release time: cargo about generate about.hbs -o THIRD_PARTY_LICENSES.md
+/THIRD_PARTY_LICENSES.md

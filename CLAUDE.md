@@ -8,7 +8,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 The source of truth for decisions and phase order is `forge-super-design.md` (§2 decisions, §12.6 phases). `forge-super-struktuur.md` (Afrikaans) is the earlier structure write-up it supersedes; kept for history.
 
-Status: phases 0 (shell), 1 (host API, `branding`) and 1.5 (workspace backbone, Explorer, Git panel) are done. Other panels are still placeholders; next is phase 2 (pin gpui `rev`, `cargo deny`), then porting the Zed edition's panels (phase 3–4).
+Status: phases 0 (shell), 1 (host API, `branding`), 1.5 (workspace backbone, Explorer, Git panel) and 2 (foundation: pinned gpui and toolchain, `cargo deny`, `cargo about`) are done. Other panels are still placeholders; next is phase 3, the shared code (Script Runner, `runtime_processes`, `ide_env`, `git_credential`), then porting the Zed edition's panels (phase 4).
 
 Repositories: this one is `github.com/mentenaz/Forge.Super` (public, GPL-3.0-or-later). The UI library is `github.com/mentenaz/Mentenaz.GPUI` (Apache-2.0), cloned at `E:\mentenaz\gpui`.
 
@@ -20,8 +20,11 @@ cargo run -p mentenaz-forge-super        # run the app (binary crate in crates/a
 cargo check -p node-ui                   # check a single crate
 cargo test -p node-core                  # tests for one crate
 cargo test -p node-core <test_name>      # a single test
-cargo update -p gpui                     # move Cargo.lock to Mentenaz.GPUI's latest main
+cargo deny check                         # licences, advisories, duplicate crates, sources (deny.toml)
+cargo about generate about.hbs -o THIRD_PARTY_LICENSES.md   # dependency licence texts, for releases
 ```
+
+The toolchain is pinned in `rust-toolchain.toml` (Rust 1.98.1, the same as the Zed edition). Run `cargo deny check` after adding or bumping dependencies; it must pass before a release.
 
 ## Architecture
 
@@ -72,5 +75,5 @@ Read the local clone at `E:\mentenaz\gpui` to look up APIs, instead of going thr
 This repo builds against the git revision locked in `Cargo.lock`, not the local clone, so the clone may be ahead of or behind what gets compiled. Compare `git -C E:/mentenaz/gpui log` with the locked sha when an API doesn't seem to match.
 
 - `gpui`, `gpui-component`, `gpui-component-assets` and `gpui_platform` all come from the same git repo. When adding another gpui crate, list it separately in `[workspace.dependencies]` with the same URL (wildcards don't work).
-- `Cargo.lock` is committed. Library changes go to Mentenaz.GPUI first (commit, push), then `cargo update -p gpui` here.
+- The four gpui crates are pinned with `rev = "<sha>"` in the root `Cargo.toml`, and `Cargo.lock` is committed. Library changes go to Mentenaz.GPUI first (commit, push), then bump the `rev` of all four together in a commit of its own ("bump gpui to <sha>").
 - To build against unpushed library changes, use a gitignored `.cargo/config.toml` with `[patch."https://github.com/mentenaz/Mentenaz.GPUI.git"]` pointing each of the four crates above at `E:/mentenaz/gpui/crates/...`. Patch **all** of them, or you get duplicate types. While patched, `Cargo.lock` records the gpui crates as local path packages. To leave the patch: push the library change, delete `.cargo/config.toml`, then run a plain `cargo build`, which re-adds the git entries at Mentenaz.GPUI's current `main` (`cargo update -p gpui` can't do this step, because the lock no longer has a git entry for it).

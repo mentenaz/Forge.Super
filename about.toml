@@ -1,0 +1,27 @@
+# cargo-about: generates THIRD_PARTY_LICENSES.md (the dependencies' licence
+# texts, which MIT and Apache-2.0 require shipping with binaries):
+#
+#   cargo about generate about.hbs -o THIRD_PARTY_LICENSES.md
+#
+# The accepted list matches deny.toml.
+no-clearly-defined = true
+private = { ignore = true }
+accepted = [
+    "Apache-2.0",
+    "Apache-2.0 WITH LLVM-exception",
+    "MIT",
+    "MIT-0",
+    "MPL-2.0",
+    "BSD-2-Clause",
+    "BSD-3-Clause",
+    "0BSD",
+    "ISC",
+    "Zlib",
+    "CC0-1.0",
+    "NCSA",
+    "Unicode-3.0",
+    "BSL-1.0",
+    "OpenSSL",
+    "bzip2-1.0.6",
+    "CDLA-Permissive-2.0",
+]

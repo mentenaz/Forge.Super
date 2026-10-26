@@ -1,0 +1,3 @@
+# Store text files with LF line endings in the repository; git picks the
+# working-copy ending per platform. Binary files (images, …) are detected.
+* text=auto eol=lf
