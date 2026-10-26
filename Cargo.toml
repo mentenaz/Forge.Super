@@ -39,6 +39,7 @@ windows = "0.62"
 branding = { path = "crates/branding" }
 forge-git-credential = { path = "crates/shared/git-credential" }
 forge-host = { path = "crates/shared/host" }
+forge-http = { path = "crates/shared/http" }
 forge-ide-env = { path = "crates/shared/ide-env" }
 forge-runtime-processes = { path = "crates/shared/runtime-processes" }
 forge-runtime-processes-ui = { path = "crates/shared/runtime-processes-ui" }

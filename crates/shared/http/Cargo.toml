@@ -1,0 +1,20 @@
+[package]
+name = "forge-http"
+description = "Small async HTTP client for package searches, version downloads and Helm GitHub API. No gpui."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish = false
+
+[dependencies]
+branding.workspace = true
+futures.workspace = true
+log.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+reqwest = { version = "0.12", default-features = false, features = ["rustls-tls", "json", "stream"] }
+thiserror = "1"
+
+[dev-dependencies]
+tempfile.workspace = true
+tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
