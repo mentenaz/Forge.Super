@@ -1,0 +1,19 @@
+mod app_menu;
+mod docks;
+mod dummy;
+mod forge_shell;
+mod nav_history;
+mod notifications;
+mod pane;
+mod panels;
+mod recent_projects;
+mod status_bar;
+mod tab_bar;
+mod tab_context_menu;
+mod tab_switcher;
+mod tabs;
+mod theme;
+mod title_bar;
+mod worktree_picker;
+
+pub use forge_shell::{ForgeShell, init};

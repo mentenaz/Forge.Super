@@ -1,0 +1,14 @@
+[package]
+name = "mentenaz-forge-super"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+gpui.workspace = true
+gpui-component.workspace = true
+gpui-component-assets.workspace = true
+rust-embed.workspace = true
+gpui_platform.workspace = true
+node-ui.workspace = true
+dotnet-ui.workspace = true

@@ -1,0 +1,67 @@
+Mentenaz Forge Super
+Copyright 2026 Francois Huyzers (Mentenaz)
+
+Licensed under the GNU General Public License, version 3 or (at your option)
+any later version. See LICENSE.
+
+-------------------------------------------------------------------------------
+Origin
+-------------------------------------------------------------------------------
+
+Forge Super is a rebuild of the "Zed edition" of Forge Super, which was a fork
+of the Zed editor (https://github.com/zed-industries/zed). Its window layout
+follows Zed's. "Zed" is a trademark of Zed Industries, Inc.; this product is
+not affiliated with or endorsed by Zed Industries.
+
+The UI is built on Mentenaz.GPUI (https://github.com/mentenaz/Mentenaz.GPUI),
+which contains:
+  - gpui and related crates, Copyright Zed Industries, Inc., Apache-2.0
+  - gpui-component, Copyright Longbridge, Apache-2.0
+  - gpui-flow, Copyright Adib, MIT
+Their licence texts ship with Mentenaz.GPUI.
+
+Third-party Rust dependencies are under their own licences (MIT, Apache-2.0,
+BSD, ISC, Zlib, MPL-2.0 and similar); see each crate's metadata.
+
+-------------------------------------------------------------------------------
+Icons
+-------------------------------------------------------------------------------
+
+crates/app/assets/icons/zed_database_zap.svg, zed_debug.svg, zed_file_rust.svg,
+zed_file_tree.svg, zed_git_branch.svg, zed_git_worktree.svg, zed_list_tree.svg,
+zed_pin.svg, zed_split.svg, zed_terminal_alt.svg
+  From the Zed editor's icon set (Zed Industries, Inc.), which is based on
+  Lucide. Licensed under the Lucide licence below.
+
+crates/app/assets/icons/git-branch.svg
+  Lucide (https://lucide.dev). Licensed under the Lucide licence below.
+
+crates/app/assets/icons/zed_node.svg, zed_python.svg, zed_dotnet.svg
+  Depict Node.js, Python and .NET, which are trademarks of the OpenJS
+  Foundation, the Python Software Foundation and the .NET Foundation
+  respectively. Used only to label the corresponding tools.
+
+All other artwork in crates/app/assets (the Forge Super anvil, watermark and
+remaining icons) is Copyright Francois Huyzers (Mentenaz).
+
+-------------------------------------------------------------------------------
+Lucide licence
+-------------------------------------------------------------------------------
+
+ISC License
+
+Copyright (c) for portions of Lucide are held by Cole Bemis 2013-2022 as part
+of Feather (MIT). All other copyright (c) for Lucide are held by Lucide
+Contributors 2022.
+
+Permission to use, copy, modify, and/or distribute this software for any
+purpose with or without fee is hereby granted, provided that the above
+copyright notice and this permission notice appear in all copies.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND
+FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+PERFORMANCE OF THIS SOFTWARE.

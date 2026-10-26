@@ -1,0 +1,26 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/app",
+    "crates/features/*/core",
+    "crates/features/*/ui",
+]
+default-members = ["crates/app"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+license = "GPL-3.0-or-later"
+
+[workspace.dependencies]
+gpui = { git = "https://github.com/mentenaz/Mentenaz.GPUI.git" }
+gpui-component = { git = "https://github.com/mentenaz/Mentenaz.GPUI.git" }
+gpui-component-assets = { git = "https://github.com/mentenaz/Mentenaz.GPUI.git" }
+gpui_platform = { git = "https://github.com/mentenaz/Mentenaz.GPUI.git" }
+
+rust-embed = "8"
+
+node-core = { path = "crates/features/node/core" }
+node-ui = { path = "crates/features/node/ui" }
+dotnet-core = { path = "crates/features/dotnet/core" }
+dotnet-ui = { path = "crates/features/dotnet/ui" }

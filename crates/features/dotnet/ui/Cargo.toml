@@ -1,0 +1,10 @@
+[package]
+name = "dotnet-ui"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+dotnet-core.workspace = true
+gpui.workspace = true
+gpui-component.workspace = true

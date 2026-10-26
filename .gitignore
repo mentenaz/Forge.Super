@@ -1,0 +1,6 @@
+/target
+# Local [patch] pointing gpui at a local Mentenaz.GPUI clone (design doc §5).
+/.cargo/config.toml
+# Editor folders
+.vs/
+.idea/
