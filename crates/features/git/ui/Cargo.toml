@@ -1,0 +1,12 @@
+[package]
+name = "git-ui"
+description = "The Git panel (changes, staging, commit) on forge-host's workspace model. Replaced by Zed's git panel in phase 5."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish = false
+
+[dependencies]
+forge-host.workspace = true
+gpui.workspace = true
+gpui-component.workspace = true

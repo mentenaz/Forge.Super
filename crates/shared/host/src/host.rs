@@ -52,11 +52,13 @@ pub trait HostDelegate {
 }
 
 type CommandRunner = Rc<dyn Fn(CommandSpec, &mut Window, &mut App)>;
+type FileOpener = Rc<dyn Fn(std::path::PathBuf, &mut Window, &mut App)>;
 
 #[derive(Default)]
 pub struct Host {
     delegate: Option<Rc<dyn HostDelegate>>,
     command_runner: Option<CommandRunner>,
+    file_opener: Option<FileOpener>,
 }
 
 impl Global for Host {}
@@ -69,6 +71,21 @@ impl Host {
     /// Registers the panel that runs commands (Script Runner).
     pub fn set_command_runner(runner: impl Fn(CommandSpec, &mut Window, &mut App) + 'static, cx: &mut App) {
         cx.global_mut::<Host>().command_runner = Some(Rc::new(runner));
+    }
+
+    /// Registers what opens files (the Explorer's read-only view now, Zed's
+    /// editor in phase 5).
+    pub fn set_file_opener(opener: impl Fn(std::path::PathBuf, &mut Window, &mut App) + 'static, cx: &mut App) {
+        cx.global_mut::<Host>().file_opener = Some(Rc::new(opener));
+    }
+
+    /// Opens `path` (absolute) in a tab with the registered file opener.
+    pub fn open_file(path: std::path::PathBuf, window: &mut Window, cx: &mut App) {
+        let opener = cx.try_global::<Host>().and_then(|host| host.file_opener.clone());
+        match opener {
+            Some(open) => open(path, window, cx),
+            None => Self::notify(NoticeKind::Warning, "Can't open files", "No file viewer is registered.", window, cx),
+        }
     }
 
     fn delegate(cx: &App) -> Option<Rc<dyn HostDelegate>> {

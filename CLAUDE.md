@@ -8,7 +8,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 The source of truth for decisions and phase order is `forge-super-design.md` (§2 decisions, §12.6 phases). `forge-super-struktuur.md` (Afrikaans) is the earlier structure write-up it supersedes; kept for history.
 
-Status: phase 0 (shell look) and phase 1 (host API, `branding`) are done. Panel contents are still placeholders; next is phase 1.5, the workspace backbone (files, file watching, git CLI).
+Status: phases 0 (shell), 1 (host API, `branding`) and 1.5 (workspace backbone, Explorer, Git panel) are done. Other panels are still placeholders; next is phase 2 (pin gpui `rev`, `cargo deny`), then porting the Zed edition's panels (phase 3–4).
 
 Repositories: this one is `github.com/mentenaz/Forge.Super` (public, GPL-3.0-or-later). The UI library is `github.com/mentenaz/Mentenaz.GPUI` (Apache-2.0), cloned at `E:\mentenaz\gpui`.
 
@@ -33,7 +33,8 @@ Workspace members are `crates/app` plus the globs `crates/features/*/core` and `
 - `crates/branding` (`branding`): product name, ids and folders. Nothing else hard-codes them. Settings live in `%APPDATA%\Mentenaz\ForgeSuperDev2\settings.json`, state in `%LOCALAPPDATA%\Mentenaz\ForgeSuperDev2\state.json`.
 - `crates/shared/host` (`forge-host`): the host API (design doc §13). Panels register with `register_panel(PanelInfo, build)`; they reach the shell only through `Host` (open a tab, show/toggle a panel, notify, run a command), observe `Workspace::model`, and keep settings/state with `Settings` / `State` (dotted keys, e.g. `panels.<id>.dock`). A feature `ui` crate exposes `pub fn init(cx)` that registers its panel.
 - Start-up order matters (`crates/app/src/main.rs`): `gpui_component::init` → `forge_host::init` → each feature's `init` → `shell::init` (which registers placeholders only for ids no feature claimed).
-- Current features: `node`, `dotnet` (templates, registered through `forge-host`).
+- `crates/shared/workspace` (`forge-workspace`): the thin workspace backbone, no gpui: `tree::list_dir` (one folder, respects `.gitignore`), `watch::watch` (batched file events), `git::Repository` (branches, worktrees, status, stage/unstage/commit via the `git` CLI, no console window, never prompts). `forge_host::Workspace` wraps it as an observable model (folder listings, `GitState`, git operations returning `Task<Result<(), GitError>>`). Replaced by Zed's `project` in phase 5 behind the same API.
+- Current features: `explorer` (file tree + read-only file view, registered as `Host`'s file opener), `git` (Git panel), `node`, `dotnet` (templates). Feature crates without domain code have only a `ui` crate.
 
 ### The shell (`crates/app/src/shell/`)
 

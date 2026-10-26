@@ -192,6 +192,9 @@ impl ForgeShell {
             status.recent_projects = recent;
         }
 
+        // Redraw when the workspace's files or git state change.
+        cx.observe(&Workspace::model(cx), |_, _, cx| cx.notify()).detach();
+
         // Theme, font sizes: save whatever changes them (title bar toggle,
         // menu, Appearance settings).
         cx.observe_global::<Theme>(|_, cx| super::theme::save(cx)).detach();

@@ -11,5 +11,7 @@ gpui-component-assets.workspace = true
 rust-embed.workspace = true
 gpui_platform.workspace = true
 forge-host.workspace = true
+explorer-ui.workspace = true
+git-ui.workspace = true
 node-ui.workspace = true
 dotnet-ui.workspace = true

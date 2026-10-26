@@ -228,6 +228,26 @@ impl ForgeShell {
             .into_any_element()
     }
 
+    /// Zed's merge-conflict indicator: shown while the repository has
+    /// conflicts; opens the Git panel.
+    pub(super) fn render_merge_conflicts(&self, cx: &mut Context<Self>) -> Option<AnyElement> {
+        let conflicts = forge_host::Workspace::model(cx).read(cx).git()?.conflicts();
+        if conflicts == 0 {
+            return None;
+        }
+        let label = if conflicts == 1 { "1 merge conflict".to_string() } else { format!("{conflicts} merge conflicts") };
+        Some(
+            Button::new("merge-conflicts")
+                .ghost()
+                .xsmall()
+                .icon(Icon::new(IconName::TriangleAlert).text_color(cx.theme().warning))
+                .label(label)
+                .tooltip("Resolve in the Git panel")
+                .on_click(cx.listener(|this, _, _, cx| this.show_panel("git", cx)))
+                .into_any_element(),
+        )
+    }
+
     /// The active file's path, when a file tab is active.
     pub(super) fn render_active_file(&self, cx: &mut Context<Self>) -> Option<AnyElement> {
         let path = self.active_tab_in(self.active_group)?.path.clone()?;

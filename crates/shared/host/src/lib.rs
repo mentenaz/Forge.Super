@@ -6,8 +6,8 @@
 //! - [`panel`]: describe a panel and register it ([`register_panel`]).
 //! - [`host`]: ask the shell to open tabs, show panels, notify, run commands
 //!   ([`Host`]).
-//! - [`workspace`]: the workspace model (root now; files and git in phase
-//!   1.5).
+//! - [`workspace`]: the workspace model: root, folder listings and git,
+//!   kept current by a file watcher.
 //! - [`settings`] / [`state`]: `settings.json` and `state.json`.
 //!
 //! The shell calls [`init`] once at startup, before any panel registers.
@@ -23,7 +23,7 @@ pub use host::{CommandSpec, Host, HostDelegate, NoticeKind, TabRequest};
 pub use panel::{BuildView, DockPosition, PanelInfo, PanelRegistry, register_panel};
 pub use settings::Settings;
 pub use state::State;
-pub use workspace::Workspace;
+pub use workspace::{DirEntry, FileState, FileStatus, GitError, GitState, Workspace, Worktree};
 
 use gpui::App;
 

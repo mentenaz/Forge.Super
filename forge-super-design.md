@@ -339,7 +339,7 @@ Measured by counting references to Zed crates per panel:
 ### 12.6 Phases
 0. **Shell look:** settle the gpui-component frame (title bar, left panels, tab bar, split view, bottom docks, status bar). Placeholders are enough for the contents. **Done (2026-10-26):** title bar with application menu, project, worktree and branch pickers; Zed's three-dock model; per-pane tab bars (split, pinning, drag and drop, folder hints, breadcrumbs); Zed-style status bar and notifications; Forge Dark theme at 13px.
 1. **Host API in `crates/shared/`:** **Done (2026-10-26)**, see §13.9. The few things panels currently take from Zed (workspace root, open a tab, toggle a dock, saved state and settings, notifications), implemented by the shell. Includes a minimal `branding` crate, pulled forward from phase 2 because settings paths need it. Design in §13.
-1.5. **Workspace backbone (option C, decided 2026-10-26):** a thin backbone of our own in `crates/shared/` (file tree via the `ignore` crate, file watching via `notify`, git via the `git` CLI), behind the host API, so Explorer, the Git panel and the worktree/branch pickers are real before Zed is vendored. Replaced by Zed's `project` in phase 5 without changing panel code. See §13.5.
+1.5. **Workspace backbone (option C, decided 2026-10-26): Done (2026-10-26)**, see §13.10. a thin backbone of our own in `crates/shared/` (file tree via the `ignore` crate, file watching via `notify`, git via the `git` CLI), behind the host API, so Explorer, the Git panel and the worktree/branch pickers are real before Zed is vendored. Replaced by Zed's `project` in phase 5 without changing panel code. See §13.5.
 2. **Foundation:** pin gpui `rev`, `cargo deny`/`cargo about` (`branding` moved to phase 1; `LICENSE`/`NOTICE` done 2026-10-26).
 3. **Shared code:** script runner, `runtime_processes`, `ide_env`, `git_credential`.
 4. **Port the gpui-component panels** onto the host API, backends into `<name>-core`, panels into `<name>-ui`, in this order:
@@ -435,6 +435,14 @@ Phase 1 defines the model and the root; files and git are added in phase 1.5 wit
 Built as designed. `branding` and `forge-host` (with tests for folders and the JSON store); every panel registers through `forge-host`, `node-ui`/`dotnet-ui` from their own crates. Verified by restarting the app: dock assignments, open docks and active panels, dock sizes, theme, font sizes, menu bar, workspace and recent projects are restored; a broken `settings.json` shows a warning, falls back to defaults and is kept as `settings.invalid.json`.
 
 Known issue: widening the left dock also narrows the right dock, because gpui-component's resizable groups scale panels proportionally when their container shrinks (Zed keeps dock widths fixed). The saved sizes are unaffected.
+
+### 13.10 Phase 1.5 result (2026-10-26)
+- `forge-workspace` (no gpui): folder listing with `.gitignore`, batched file watching (Zed's `notify` fork, same pin as Mentenaz.GPUI), git via the CLI. 10 tests, including real temporary repositories.
+- `forge_host::Workspace`: root, folder listings, `GitState` (branch, branches, worktrees, status, conflicts), git operations; kept current by the watcher. `Host::open_file` with a registered file opener.
+- Title bar: real worktree and branch pickers (switch branch, create a worktree next to the repository and open it; hidden outside a repository). Status bar: merge-conflict indicator.
+- `explorer-ui`: file tree coloured by git status, opening files read-only in gpui-component's code editor (no syntax colours yet: Mentenaz.GPUI's tree-sitter highlighting isn't wired up).
+- `git-ui`: Git panel with Merge Conflicts / Staged / Changes, stage and unstage, commit.
+- Verified on a scratch repository: live updates from outside changes, git's own error messages surfaced (e.g. switching branch during a merge), worktree creation, stage and commit.
 
 ### 13.8 Not in phase 1
 Files and git (phase 1.5), language servers, the editor, real panel contents (phase 4), live settings reload, a settings UI.

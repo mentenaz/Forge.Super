@@ -1,0 +1,12 @@
+[package]
+name = "explorer-ui"
+description = "The Explorer panel (file tree) and a read-only file view, on forge-host's workspace model. Replaced by Zed's project panel and editor in phase 5."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish = false
+
+[dependencies]
+forge-host.workspace = true
+gpui.workspace = true
+gpui-component.workspace = true

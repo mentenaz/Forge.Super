@@ -3,23 +3,22 @@
 //! crates provide real ones. A feature crate that registers the same id
 //! first (e.g. `node-ui`) replaces the placeholder.
 //!
-//! The placeholders talk to the shell only through `forge_host::Host`, the
-//! same way ported panels will.
+//! The Explorer and Git panels are real (`explorer-ui`, `git-ui`); their
+//! entries here only matter if those crates aren't registered. The
+//! placeholders talk to the shell only through `forge_host::Host`, the same
+//! way ported panels will.
 
 use std::rc::Rc;
 
 use forge_host::{DockPosition, Host, PanelInfo, TabRequest, register_panel};
 use gpui::{
-    App, AppContext, Context, InteractiveElement, IntoElement, ParentElement, Render, SharedString,
-    StatefulInteractiveElement, Styled, Window, div,
+    App, AppContext, Context, IntoElement, ParentElement, Render, SharedString, Styled, Window, div,
 };
 use gpui_component::{
-    ActiveTheme, Icon, IconName, Sizable, StyledExt,
+    ActiveTheme, Icon, IconName, StyledExt,
     button::Button,
-    h_flex, v_flex,
+    v_flex,
 };
-
-use super::dummy::DUMMY_FILES;
 
 /// A registered panel's id (`PanelInfo::id`).
 pub(super) type PanelId = &'static str;
@@ -80,29 +79,7 @@ fn panel_tab(id: PanelId, title: &'static str, icon: Icon) -> TabRequest {
     }
 }
 
-/// A tab for `DUMMY_FILES[index]`; the content stands in for the editor.
-fn dummy_file_tab(index: usize) -> Option<TabRequest> {
-    let file = DUMMY_FILES.get(index)?;
-    let path = file.path;
-    Some(TabRequest {
-        key: path.into(),
-        title: path.rsplit('/').next().unwrap_or(path).into(),
-        icon: Icon::new(IconName::File),
-        path: Some(path.into()),
-        symbol: file.symbol.map(Into::into),
-        dirty: file.dirty,
-        build: Rc::new(move |_, cx| {
-            cx.new(|_| PlaceholderView {
-                title: path.into(),
-                description: "The editor will be embedded here.".into(),
-            })
-            .into()
-        }),
-    })
-}
-
-/// Stand-in for a dock panel. The Explorer one lists dummy files so the tab
-/// bar can be tried out.
+/// Stand-in for a dock panel.
 pub(super) struct PlaceholderPanel {
     id: PanelId,
     title: &'static str,
@@ -111,46 +88,7 @@ pub(super) struct PlaceholderPanel {
 
 impl Render for PlaceholderPanel {
     fn render(&mut self, _: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
-        let title = self.title;
-
-        let body = if self.id == "explorer" {
-            let files = DUMMY_FILES.iter().enumerate().map(|(index, file)| {
-                h_flex()
-                    .id(("dummy-file", index))
-                    .gap_1p5()
-                    .px_2()
-                    .py_0p5()
-                    .rounded(cx.theme().radius)
-                    .text_sm()
-                    .cursor_pointer()
-                    .hover(|el| el.bg(cx.theme().list_hover))
-                    .child(Icon::new(IconName::File).xsmall().text_color(cx.theme().muted_foreground))
-                    .child(div().truncate().child(file.path))
-                    .on_click(move |_, window, cx| {
-                        if let Some(tab) = dummy_file_tab(index) {
-                            Host::open_tab(tab, window, cx);
-                        }
-                    })
-            });
-            v_flex().gap_0p5().children(files).into_any_element()
-        } else {
-            let (id, icon) = (self.id, self.icon.clone());
-            v_flex()
-                .gap_3()
-                .child(
-                    div()
-                        .text_sm()
-                        .text_color(cx.theme().muted_foreground)
-                        .child(format!("The {title} panel will live here.")),
-                )
-                .child(
-                    Button::new("open-panel-tab")
-                        .outline()
-                        .label(format!("Open {title} tab"))
-                        .on_click(move |_, window, cx| Host::open_tab(panel_tab(id, title, icon.clone()), window, cx)),
-                )
-                .into_any_element()
-        };
+        let (id, title, icon) = (self.id, self.title, self.icon.clone());
 
         v_flex()
             .size_full()
@@ -163,7 +101,18 @@ impl Render for PlaceholderPanel {
                     .text_color(cx.theme().muted_foreground)
                     .child(title.to_uppercase()),
             )
-            .child(body)
+            .child(
+                div()
+                    .text_sm()
+                    .text_color(cx.theme().muted_foreground)
+                    .child(format!("The {title} panel will live here.")),
+            )
+            .child(
+                Button::new("open-panel-tab")
+                    .outline()
+                    .label(format!("Open {title} tab"))
+                    .on_click(move |_, window, cx| Host::open_tab(panel_tab(id, title, icon.clone()), window, cx)),
+            )
     }
 }
 

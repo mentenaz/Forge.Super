@@ -15,6 +15,8 @@ fn main() {
         // The host first, then the feature crates register their panels,
         // then the shell fills the gaps with placeholders.
         forge_host::init(cx);
+        explorer_ui::init(cx);
+        git_ui::init(cx);
         node_ui::init(cx);
         dotnet_ui::init(cx);
         shell::init(cx);

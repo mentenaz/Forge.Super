@@ -32,6 +32,9 @@ impl ForgeShell {
             .left(self.render_search_button(cx))
             .left(self.render_lsp_button(cx))
             .left(self.render_diagnostics(cx));
+        if let Some(conflicts) = self.render_merge_conflicts(cx) {
+            bar = bar.left(conflicts);
+        }
         if let Some(file) = self.render_active_file(cx) {
             bar = bar.left(file);
         }

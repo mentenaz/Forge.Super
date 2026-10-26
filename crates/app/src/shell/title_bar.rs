@@ -8,10 +8,10 @@
 
 use gpui::{
     Anchor, App, Context, InteractiveElement, IntoElement, MouseButton, ParentElement,
-    Styled, Window, div, px,
+    Styled, Window, div, prelude::FluentBuilder, px,
 };
 use gpui_component::{
-    ActiveTheme, Icon, IconName, Sizable, Theme, ThemeMode, TitleBar,
+    ActiveTheme, IconName, Sizable, Theme, ThemeMode, TitleBar,
     button::{Button, ButtonVariants},
     menu::{DropdownMenu, PopupMenuItem},
     scroll::ScrollbarMode,
@@ -40,40 +40,6 @@ fn set_scrollbar_mode(mode: ScrollbarMode, window: &mut Window, cx: &mut App) {
 }
 
 impl ForgeShell {
-    fn render_branch_picker(&self, cx: &mut Context<Self>) -> impl IntoElement {
-        let this = cx.weak_entity();
-        let branches = self.status.branches.clone();
-        let current = self.status.branch.clone();
-
-        Button::new("branch-picker")
-            .ghost()
-            .small()
-            .icon(Icon::empty().path("icons/git-branch.svg"))
-            .label(self.status.branch.clone())
-            .text_color(cx.theme().muted_foreground)
-            .tooltip(format!("Branch · Currently Checked Out: {}", self.status.branch))
-            .dropdown_menu(move |menu, _, _| {
-                let mut menu = menu.label("Branches");
-                for branch in &branches {
-                    let this = this.clone();
-                    let name = branch.clone();
-                    menu = menu.item(PopupMenuItem::new(branch.clone()).checked(*branch == current).on_click(move |_, _, cx| {
-                        let name = name.clone();
-                        this.update(cx, |this, cx| {
-                            let current = this.status.current_worktree;
-                            if let Some(worktree) = this.status.worktrees.get_mut(current) {
-                                worktree.branch = name.clone();
-                            }
-                            this.status.branch = name;
-                            cx.notify();
-                        })
-                        .ok();
-                    }));
-                }
-                menu
-            })
-    }
-
     fn render_settings_button(&self, cx: &mut Context<Self>) -> impl IntoElement {
         let this = cx.weak_entity();
         let show_menus = self.show_menus;
@@ -145,6 +111,10 @@ impl ForgeShell {
     }
 
     pub(super) fn render_title_bar(&self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+        // Worktree and branch pickers only inside a git repository.
+        let worktree = self.render_worktree_picker(window, cx).map(IntoElement::into_any_element);
+        let branch = self.render_branch_picker(cx).map(IntoElement::into_any_element);
+        let separator = worktree.is_some() && branch.is_some();
         let is_dark = cx.theme().mode.is_dark();
         let theme_button = Button::new("forge-theme")
             .small()
@@ -168,9 +138,11 @@ impl ForgeShell {
                     .on_mouse_down(MouseButton::Left, |_, _, cx| cx.stop_propagation())
                     .children(self.render_app_menu())
                     .child(self.render_project_picker(window, cx))
-                    .child(self.render_worktree_picker(window, cx))
-                    .child(div().text_sm().text_color(cx.theme().muted_foreground).opacity(0.25).child("/"))
-                    .child(self.render_branch_picker(cx)),
+                    .children(worktree)
+                    .when(separator, |el| {
+                        el.child(div().text_sm().text_color(cx.theme().muted_foreground).opacity(0.25).child("/"))
+                    })
+                    .children(branch),
             )
             .child(div().flex_1().h_full())
             .child(
