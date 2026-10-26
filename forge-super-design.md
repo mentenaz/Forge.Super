@@ -338,7 +338,8 @@ Measured by counting references to Zed crates per panel:
 
 ### 12.6 Phases
 0. **Shell look:** settle the gpui-component frame (title bar, left panels, tab bar, split view, bottom docks, status bar). Placeholders are enough for the contents. **Done (2026-10-26):** title bar with application menu, project, worktree and branch pickers; Zed's three-dock model; per-pane tab bars (split, pinning, drag and drop, folder hints, breadcrumbs); Zed-style status bar and notifications; Forge Dark theme at 13px.
-1. **Host API in `crates/shared/`:** the few things panels currently take from Zed (workspace root, open a tab, toggle a dock, saved state and settings, notifications), implemented by the shell. Includes a minimal `branding` crate, pulled forward from phase 2 because settings paths need it. Design in §13.
+1. **Host API in `crates/shared/`:** **Done (2026-10-26)**, see §13.9. The few things panels currently take from Zed (workspace root, open a tab, toggle a dock, saved state and settings, notifications), implemented by the shell. Includes a minimal `branding` crate, pulled forward from phase 2 because settings paths need it. Design in §13.
+1.5. **Workspace backbone (option C, decided 2026-10-26):** a thin backbone of our own in `crates/shared/` (file tree via the `ignore` crate, file watching via `notify`, git via the `git` CLI), behind the host API, so Explorer, the Git panel and the worktree/branch pickers are real before Zed is vendored. Replaced by Zed's `project` in phase 5 without changing panel code. See §13.5.
 2. **Foundation:** pin gpui `rev`, `cargo deny`/`cargo about` (`branding` moved to phase 1; `LICENSE`/`NOTICE` done 2026-10-26).
 3. **Shared code:** script runner, `runtime_processes`, `ide_env`, `git_credential`.
 4. **Port the gpui-component panels** onto the host API, backends into `<name>-core`, panels into `<name>-ui`, in this order:
@@ -412,15 +413,28 @@ Renaming the dev build to the release name later is a one-line change here.
 - `run_command(CommandSpec)`: whichever panel registered as the command runner (Script Runner, phase 4.1) runs it; until then the host reports it isn't available.
 - The IDE's runtime `PATH` (`ide_env`) moves to `crates/shared/` with Script Runner in phase 3; the host only exposes the service hook in phase 1.
 
-### 13.5 Shell changes
+### 13.5 Workspace (slot for phase 1.5)
+The host exposes the workspace as one observable model, so panels never touch the backbone directly:
+- `root()` and change notifications (phase 1, real).
+- Files: `list(dir)`, `read(path)`, file-change events (phase 1.5, our backbone; phase 5, Zed's `project`).
+- Git: current branch, branches, worktrees, changed files, switch/create/commit (phase 1.5 via the `git` CLI; phase 5, Zed's `git`).
+
+Phase 1 defines the model and the root; files and git are added in phase 1.5 without changing the API's shape.
+
+### 13.6 Shell changes
 - Docks and buttons come from panel registrations; dock moves are saved to the panel's `dock` setting.
 - Layout (open docks, sizes, active panels), theme mode, font size and `show_menus` persist between runs.
 - `dummy.rs` keeps only what phase 1 doesn't make real: git (worktrees, branches), language servers, editor info, Explorer's dummy files.
 
-### 13.6 Done when
+### 13.7 Done when
 - `branding` and `forge-host` exist and build; `settings.json` and `state.json` are created in the folders above.
-- Cockpit (placeholder view for now) is registered through `forge-host` instead of the hard-coded list.
+- Every panel is registered through `forge-host` instead of the hard-coded list; the `node-ui` and `dotnet-ui` templates register theirs from their own crates, proving the crate boundary. (Cockpit itself arrives with its port in phase 4.1.)
 - Moving a panel to another dock, resizing a dock, switching theme or the menu bar, then restarting, restores all of it.
 
-### 13.7 Not in phase 1
-Git, language servers, the editor, real panel contents (phase 4), live settings reload, a settings UI.
+### 13.9 Result (2026-10-26)
+Built as designed. `branding` and `forge-host` (with tests for folders and the JSON store); every panel registers through `forge-host`, `node-ui`/`dotnet-ui` from their own crates. Verified by restarting the app: dock assignments, open docks and active panels, dock sizes, theme, font sizes, menu bar, workspace and recent projects are restored; a broken `settings.json` shows a warning, falls back to defaults and is kept as `settings.invalid.json`.
+
+Known issue: widening the left dock also narrows the right dock, because gpui-component's resizable groups scale panels proportionally when their container shrinks (Zed keeps dock widths fixed). The saved sizes are unaffected.
+
+### 13.8 Not in phase 1
+Files and git (phase 1.5), language servers, the editor, real panel contents (phase 4), live settings reload, a settings UI.

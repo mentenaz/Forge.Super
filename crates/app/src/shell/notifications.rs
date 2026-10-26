@@ -18,15 +18,15 @@ use gpui_component::{
 
 use super::ForgeShell;
 
-#[derive(Clone, Copy, PartialEq, Eq)]
-pub(super) enum NoticeKind {
-    Info,
-    Success,
-    Warning,
-    Error,
+pub(super) use forge_host::NoticeKind;
+
+/// How each kind looks in the notification centre.
+trait NoticeKindStyle {
+    fn icon(self) -> IconName;
+    fn color(self, cx: &App) -> Hsla;
 }
 
-impl NoticeKind {
+impl NoticeKindStyle for NoticeKind {
     fn icon(self) -> IconName {
         match self {
             NoticeKind::Info => IconName::Info,

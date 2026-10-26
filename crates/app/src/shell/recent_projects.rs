@@ -18,6 +18,8 @@ use gpui_component::{
     v_flex,
 };
 
+use forge_host::{State, Workspace};
+
 use super::ForgeShell;
 use super::app_menu::OpenFolder;
 
@@ -30,10 +32,16 @@ fn folder_name(path: &str) -> String {
 
 impl ForgeShell {
     /// Make `path` the workspace and move it to the top of the recent list.
+    /// Both are remembered for the next run, and panels observing
+    /// `forge_host::Workspace` are told.
     pub(super) fn set_workspace(&mut self, path: PathBuf, cx: &mut Context<Self>) {
         let entry: SharedString = path.to_string_lossy().into_owned().into();
         self.status.recent_projects.retain(|p| *p != entry);
         self.status.recent_projects.insert(0, entry);
+        State::set("recent_projects", &self.status.recent_projects, cx);
+        State::set("workspace_root", &path, cx);
+        let root = Some(path.clone());
+        Workspace::model(cx).update(cx, |workspace, cx| workspace.set_root(root, cx));
         self.workspace_root = Some(path);
         self.project_picker_open = false;
         cx.notify();
@@ -195,6 +203,7 @@ impl ForgeShell {
                                 .on_click(cx.listener(move |this, _, _, cx| {
                                     cx.stop_propagation();
                                     this.status.recent_projects.retain(|p| *p != forget);
+                                    State::set("recent_projects", &this.status.recent_projects, cx);
                                     cx.notify();
                                 })),
                         )

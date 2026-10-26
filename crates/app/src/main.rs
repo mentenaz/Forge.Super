@@ -12,6 +12,11 @@ fn main() {
 
     app.run(|cx: &mut App| {
         gpui_component::init(cx);
+        // The host first, then the feature crates register their panels,
+        // then the shell fills the gaps with placeholders.
+        forge_host::init(cx);
+        node_ui::init(cx);
+        dotnet_ui::init(cx);
         shell::init(cx);
 
         let bounds = WindowBounds::centered(size(px(1400.0), px(900.0)), cx);

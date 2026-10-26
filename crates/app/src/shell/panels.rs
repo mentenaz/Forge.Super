@@ -1,9 +1,16 @@
-//! The panels the shell's docks can hold, and the placeholder views that
-//! stand in for them until the feature crates (`node-ui`, `dotnet-ui`, ...)
-//! provide real ones.
+//! The built-in panels, registered through `forge-host` like any feature
+//! panel, and the placeholder views that stand in for them until the feature
+//! crates provide real ones. A feature crate that registers the same id
+//! first (e.g. `node-ui`) replaces the placeholder.
+//!
+//! The placeholders talk to the shell only through `forge_host::Host`, the
+//! same way ported panels will.
 
+use std::rc::Rc;
+
+use forge_host::{DockPosition, Host, PanelInfo, TabRequest, register_panel};
 use gpui::{
-    Context, EventEmitter, InteractiveElement, IntoElement, ParentElement, Render, SharedString,
+    App, AppContext, Context, InteractiveElement, IntoElement, ParentElement, Render, SharedString,
     StatefulInteractiveElement, Styled, Window, div,
 };
 use gpui_component::{
@@ -14,172 +21,99 @@ use gpui_component::{
 
 use super::dummy::DUMMY_FILES;
 
-/// The three docks around the tab area, as in Zed: left and right run the
-/// full height between the title bar and status bar, bottom sits under the
-/// tab area only.
-#[derive(Clone, Copy, PartialEq, Eq)]
-pub(super) enum DockPosition {
-    Left,
-    Right,
-    Bottom,
+/// A registered panel's id (`PanelInfo::id`).
+pub(super) type PanelId = &'static str;
+
+/// The Zed edition's panels, with its icons and default docks.
+fn builtin_panels() -> Vec<PanelInfo> {
+    let (left, right, bottom) = (DockPosition::Left, DockPosition::Right, DockPosition::Bottom);
+    let path = |p: &'static str| Icon::empty().path(p);
+    let panel = |id, title, icon, default_dock, order| PanelInfo { id, title, icon, tooltip: None, default_dock, order };
+    vec![
+        panel("explorer", "Explorer", path("icons/zed_file_tree.svg"), left, 0),
+        panel("cockpit", "Cockpit", path("icons/zed_cockpit.svg"), left, 10),
+        panel("helm", "Helm", Icon::new(IconName::Github), left, 20),
+        panel("python", "Python", path("icons/zed_python.svg"), left, 30),
+        panel("node", "Node", path("icons/zed_node.svg"), left, 40),
+        panel("dotnet", ".NET", path("icons/zed_dotnet.svg"), left, 50),
+        panel("flows", "Flows", Icon::new(IconName::Network), left, 60),
+        panel("rust", "Rust", path("icons/zed_file_rust.svg"), left, 70),
+        panel("demo", "Demo", path("icons/Demo.svg"), left, 1000),
+        panel("git", "Git", path("icons/zed_git_branch.svg"), right, 0),
+        panel("outline", "Outline", path("icons/zed_list_tree.svg"), right, 10),
+        panel("terminal", "Terminal", path("icons/zed_terminal_alt.svg"), bottom, 0),
+        panel("debugger", "Debugger", path("icons/zed_debug.svg"), bottom, 10),
+        panel("database", "Database", path("icons/zed_database_zap.svg"), bottom, 20),
+        panel("script-runner", "Script Runner", path("icons/zed_runner.svg"), bottom, 30),
+        panel("processes", "Processes", Icon::new(IconName::Cpu), bottom, 40),
+    ]
 }
 
-impl DockPosition {
-    pub(super) const ALL: [DockPosition; 3] =
-        [DockPosition::Left, DockPosition::Right, DockPosition::Bottom];
-
-    pub(super) fn title(self) -> &'static str {
-        match self {
-            DockPosition::Left => "Left",
-            DockPosition::Right => "Right",
-            DockPosition::Bottom => "Bottom",
-        }
-    }
-}
-
-#[derive(Clone, Copy, PartialEq, Eq)]
-pub(super) enum PanelId {
-    Explorer,
-    Cockpit,
-    Helm,
-    Python,
-    Node,
-    DotNet,
-    Flows,
-    Rust,
-    Demo,
-    Git,
-    Outline,
-    Terminal,
-    Debugger,
-    Database,
-    ScriptRunner,
-    Processes,
-}
-
-impl PanelId {
-    /// Every panel, in status-bar button order within each dock.
-    pub(super) const ALL: [PanelId; 16] = [
-        PanelId::Explorer,
-        PanelId::Cockpit,
-        PanelId::Helm,
-        PanelId::Python,
-        PanelId::Node,
-        PanelId::DotNet,
-        PanelId::Flows,
-        PanelId::Rust,
-        PanelId::Demo,
-        PanelId::Git,
-        PanelId::Outline,
-        PanelId::Terminal,
-        PanelId::Debugger,
-        PanelId::Database,
-        PanelId::ScriptRunner,
-        PanelId::Processes,
-    ];
-
-    /// Where the panel starts out; the user can move it to another dock.
-    /// Will come from settings.
-    pub(super) fn default_position(self) -> DockPosition {
-        match self {
-            PanelId::Git | PanelId::Outline => DockPosition::Right,
-            PanelId::Terminal
-            | PanelId::Debugger
-            | PanelId::Database
-            | PanelId::ScriptRunner
-            | PanelId::Processes => DockPosition::Bottom,
-            _ => DockPosition::Left,
-        }
-    }
-
-    /// Stable string id, used for tab keys.
-    pub(super) fn slug(self) -> &'static str {
-        match self {
-            PanelId::Explorer => "explorer",
-            PanelId::Cockpit => "cockpit",
-            PanelId::Helm => "helm",
-            PanelId::Python => "python",
-            PanelId::Node => "node",
-            PanelId::DotNet => "dotnet",
-            PanelId::Flows => "flows",
-            PanelId::Rust => "rust",
-            PanelId::Demo => "demo",
-            PanelId::Git => "git",
-            PanelId::Outline => "outline",
-            PanelId::Terminal => "terminal",
-            PanelId::Debugger => "debugger",
-            PanelId::Database => "database",
-            PanelId::ScriptRunner => "script-runner",
-            PanelId::Processes => "processes",
-        }
-    }
-
-    pub(super) fn title(self) -> &'static str {
-        match self {
-            PanelId::Explorer => "Explorer",
-            PanelId::Cockpit => "Cockpit",
-            PanelId::Helm => "Helm",
-            PanelId::Python => "Python",
-            PanelId::Node => "Node",
-            PanelId::DotNet => ".NET",
-            PanelId::Flows => "Flows",
-            PanelId::Rust => "Rust",
-            PanelId::Demo => "Demo",
-            PanelId::Git => "Git",
-            PanelId::Outline => "Outline",
-            PanelId::Terminal => "Terminal",
-            PanelId::Debugger => "Debugger",
-            PanelId::Database => "Database",
-            PanelId::ScriptRunner => "Script Runner",
-            PanelId::Processes => "Processes",
-        }
-    }
-
-    /// The Zed edition's icon for each panel.
-    pub(super) fn icon(self) -> Icon {
-        let path = |p: &'static str| Icon::empty().path(p);
-        match self {
-            PanelId::Explorer => path("icons/zed_file_tree.svg"),
-            PanelId::Cockpit => path("icons/zed_cockpit.svg"),
-            PanelId::Helm => Icon::new(IconName::Github),
-            PanelId::Python => path("icons/zed_python.svg"),
-            PanelId::Node => path("icons/zed_node.svg"),
-            PanelId::DotNet => path("icons/zed_dotnet.svg"),
-            PanelId::Flows => Icon::new(IconName::Network),
-            PanelId::Rust => path("icons/zed_file_rust.svg"),
-            PanelId::Demo => path("icons/Demo.svg"),
-            PanelId::Git => path("icons/zed_git_branch.svg"),
-            PanelId::Outline => path("icons/zed_list_tree.svg"),
-            PanelId::Terminal => path("icons/zed_terminal_alt.svg"),
-            PanelId::Debugger => path("icons/zed_debug.svg"),
-            PanelId::Database => path("icons/zed_database_zap.svg"),
-            PanelId::ScriptRunner => path("icons/zed_runner.svg"),
-            PanelId::Processes => Icon::new(IconName::Cpu),
-        }
+/// Registers a placeholder for every built-in panel no feature crate has
+/// registered yet. Call after the feature crates' `init`.
+pub(super) fn register_placeholders(cx: &mut App) {
+    for info in builtin_panels() {
+        let (id, title, icon) = (info.id, info.title, info.icon.clone());
+        register_panel(cx, info, move |_, cx| {
+            let icon = icon.clone();
+            cx.new(|_| PlaceholderPanel { id, title, icon }).into()
+        });
     }
 }
 
-/// What a panel asks the shell to do.
-pub(super) enum PanelEvent {
-    /// Open (or focus) this panel's own tab.
-    OpenTab,
-    /// Open `DUMMY_FILES[index]` (dummy Explorer only).
-    OpenFile(usize),
+/// A placeholder tab for a panel's own content.
+fn panel_tab(id: PanelId, title: &'static str, icon: Icon) -> TabRequest {
+    TabRequest {
+        key: id.into(),
+        title: title.into(),
+        icon,
+        path: None,
+        symbol: None,
+        dirty: false,
+        build: Rc::new(move |_, cx| {
+            cx.new(|_| PlaceholderView {
+                title: title.into(),
+                description: format!("{title} content will live here.").into(),
+            })
+            .into()
+        }),
+    }
+}
+
+/// A tab for `DUMMY_FILES[index]`; the content stands in for the editor.
+fn dummy_file_tab(index: usize) -> Option<TabRequest> {
+    let file = DUMMY_FILES.get(index)?;
+    let path = file.path;
+    Some(TabRequest {
+        key: path.into(),
+        title: path.rsplit('/').next().unwrap_or(path).into(),
+        icon: Icon::new(IconName::File),
+        path: Some(path.into()),
+        symbol: file.symbol.map(Into::into),
+        dirty: file.dirty,
+        build: Rc::new(move |_, cx| {
+            cx.new(|_| PlaceholderView {
+                title: path.into(),
+                description: "The editor will be embedded here.".into(),
+            })
+            .into()
+        }),
+    })
 }
 
 /// Stand-in for a dock panel. The Explorer one lists dummy files so the tab
 /// bar can be tried out.
 pub(super) struct PlaceholderPanel {
-    pub(super) panel: PanelId,
+    id: PanelId,
+    title: &'static str,
+    icon: Icon,
 }
-
-impl EventEmitter<PanelEvent> for PlaceholderPanel {}
 
 impl Render for PlaceholderPanel {
     fn render(&mut self, _: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
-        let title = self.panel.title();
+        let title = self.title;
 
-        let body = if self.panel == PanelId::Explorer {
+        let body = if self.id == "explorer" {
             let files = DUMMY_FILES.iter().enumerate().map(|(index, file)| {
                 h_flex()
                     .id(("dummy-file", index))
@@ -192,10 +126,15 @@ impl Render for PlaceholderPanel {
                     .hover(|el| el.bg(cx.theme().list_hover))
                     .child(Icon::new(IconName::File).xsmall().text_color(cx.theme().muted_foreground))
                     .child(div().truncate().child(file.path))
-                    .on_click(cx.listener(move |_, _, _, cx| cx.emit(PanelEvent::OpenFile(index))))
+                    .on_click(move |_, window, cx| {
+                        if let Some(tab) = dummy_file_tab(index) {
+                            Host::open_tab(tab, window, cx);
+                        }
+                    })
             });
             v_flex().gap_0p5().children(files).into_any_element()
         } else {
+            let (id, icon) = (self.id, self.icon.clone());
             v_flex()
                 .gap_3()
                 .child(
@@ -208,7 +147,7 @@ impl Render for PlaceholderPanel {
                     Button::new("open-panel-tab")
                         .outline()
                         .label(format!("Open {title} tab"))
-                        .on_click(cx.listener(|_, _, _, cx| cx.emit(PanelEvent::OpenTab))),
+                        .on_click(move |_, window, cx| Host::open_tab(panel_tab(id, title, icon.clone()), window, cx)),
                 )
                 .into_any_element()
         };

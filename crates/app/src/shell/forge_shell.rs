@@ -10,33 +10,38 @@
 //! ```
 //!
 //! Each dock holds any number of panels and shows one at a time (see
-//! `docks.rs`). To add a panel, add a `PanelId` variant; its placeholder,
-//! dock placement and status-bar button all follow from `PanelId::ALL`.
+//! `docks.rs`). Panels come from `forge_host::PanelRegistry`: feature crates
+//! register theirs, and `panels.rs` registers placeholders for the rest.
+//!
+//! Between runs the shell restores the workspace, recent projects, dock
+//! layout, theme, font sizes and menu bar from `forge-host`'s settings and
+//! state.
 
 use std::collections::VecDeque;
 use std::path::PathBuf;
 use std::rc::Rc;
 
+use forge_host::{DockPosition, Host, NoticeKind, Settings, State, Workspace};
+
 use gpui::{
     Anchor, AnyElement, App, AppContext, Context, Entity, FocusHandle, Focusable, InteractiveElement,
     IntoElement, KeyBinding, ParentElement, Pixels, Point, Render, ScrollHandle, Styled, Task, Window, actions,
-    div, px,
+    SharedString, div, px,
 };
 use gpui_component::{
     Root, Theme,
     input::{InputEvent, InputState},
     menu::AppMenuBar,
-    resizable::{h_resizable, resizable_panel, v_resizable},
+    resizable::{ResizableState, h_resizable, resizable_panel, v_resizable},
     v_flex,
 };
 
-use super::docks::{Dock, PanelEntry};
+use super::docks::{self, Dock, PanelEntry};
 use super::dummy::{self, ShellStatus};
+use super::host_delegate::ShellHost;
 use super::notifications::NoticeEntry;
-use super::dummy::DUMMY_FILES;
-use super::panels::{DockPosition, PanelEvent, PanelId, PlaceholderPanel, PlaceholderView};
 use super::tab_switcher::TabSwitcherState;
-use super::tabs::{BuildTabView, TabGroup, TabSpec, WorkspaceTab};
+use super::tabs::{TabGroup, WorkspaceTab};
 
 actions!(
     forge_shell,
@@ -55,9 +60,17 @@ actions!(
     ]
 );
 
+/// Call after `forge_host::init` and the feature crates' `init`, so their
+/// panels are registered before the placeholders fill the gaps.
 pub fn init(cx: &mut App) {
     super::theme::init(cx);
     super::app_menu::init(cx);
+    super::panels::register_placeholders(cx);
+    cx.on_app_quit(|cx| {
+        State::flush(cx);
+        async {}
+    })
+    .detach();
 
     // Toasts appear bottom-right, just above the status bar and its bell.
     let notification = &mut Theme::global_mut(cx).notification;
@@ -84,8 +97,9 @@ pub fn init(cx: &mut App) {
 }
 
 pub struct ForgeShell {
+    /// Mirrored into `forge_host::Workspace` (see `set_workspace`).
     pub(super) workspace_root: Option<PathBuf>,
-    /// Every panel with the dock it is in, in `PanelId::ALL` order.
+    /// Every registered panel with the dock it is in, in button order.
     pub(super) panels: Vec<PanelEntry>,
     /// Indexed by `DockPosition as usize`.
     pub(super) docks: [Dock; 3],
@@ -139,22 +153,48 @@ impl ForgeShell {
     pub fn view(window: &mut Window, cx: &mut App) -> Entity<Self> {
         let shell = cx.new(|cx| Self::new(window, cx));
         shell.read(cx).focus_handle.clone().focus(window, cx);
+        Host::set_delegate(Rc::new(ShellHost(shell.downgrade())), cx);
+
+        // A settings or state file that couldn't be read is reported, not
+        // fatal: the defaults are used and the bad file is kept aside.
+        // Deferred: toasts need the window's `Root`, which wraps the shell
+        // only after this returns.
+        let errors = [Settings::load_error(cx), State::load_error(cx)];
+        let weak = shell.downgrade();
+        window.defer(cx, move |window, cx| {
+            let _ = weak.update(cx, |shell, cx| {
+                for error in errors.into_iter().flatten() {
+                    shell.notify(NoticeKind::Warning, "Couldn't read a settings file", error, window, cx);
+                }
+            });
+        });
         shell
     }
 
     fn new(window: &mut Window, cx: &mut Context<Self>) -> Self {
-        let panels = PanelId::ALL
-            .into_iter()
-            .map(|id| {
-                let entity = cx.new(|_| PlaceholderPanel { panel: id });
-                cx.subscribe_in(&entity, window, move |this, _, event: &PanelEvent, window, cx| match event {
-                    PanelEvent::OpenTab => this.open_panel_tab(id, window, cx),
-                    PanelEvent::OpenFile(index) => this.open_dummy_file(*index, window, cx),
-                })
-                .detach();
-                PanelEntry { id, position: id.default_position(), view: entity.into() }
-            })
-            .collect();
+        let panels = docks::build_panels(window, cx);
+        let docks = [
+            docks::load_dock(DockPosition::Left, &panels, true, Some("explorer"), cx),
+            docks::load_dock(DockPosition::Right, &panels, false, Some("git"), cx),
+            docks::load_dock(DockPosition::Bottom, &panels, false, Some("terminal"), cx),
+        ];
+
+        // Reopen the last workspace if it still exists, else the folder the
+        // app was started in.
+        let workspace_root = State::get::<PathBuf>("workspace_root", cx)
+            .filter(|path| path.is_dir())
+            .or_else(|| std::env::current_dir().ok());
+        let root = workspace_root.clone();
+        Workspace::model(cx).update(cx, |workspace, cx| workspace.set_root(root, cx));
+
+        let mut status = ShellStatus::sample();
+        if let Some(recent) = State::get::<Vec<SharedString>>("recent_projects", cx) {
+            status.recent_projects = recent;
+        }
+
+        // Theme, font sizes: save whatever changes them (title bar toggle,
+        // menu, Appearance settings).
+        cx.observe_global::<Theme>(|_, cx| super::theme::save(cx)).detach();
 
         let project_search = cx.new(|cx| InputState::new(window, cx).placeholder("Search recent projects…"));
         cx.subscribe(&project_search, |this, _, event: &InputEvent, cx| {
@@ -178,13 +218,9 @@ impl ForgeShell {
         .detach();
 
         Self {
-            workspace_root: std::env::current_dir().ok(),
+            workspace_root,
             panels,
-            docks: [
-                Dock::new(true, Some(PanelId::Explorer), cx),
-                Dock::new(false, Some(PanelId::Git), cx),
-                Dock::new(false, Some(PanelId::Terminal), cx),
-            ],
+            docks,
             tabs: Vec::new(),
             active_tab: None,
             split_tabs: Vec::new(),
@@ -201,10 +237,10 @@ impl ForgeShell {
             tab_switcher: None,
             tab_switcher_commit_task: None,
             tab_context_menu: None,
-            status: ShellStatus::sample(),
+            status,
             notices: dummy::sample_notices(),
             notifications_open: false,
-            show_menus: false,
+            show_menus: Settings::get("show_menus", cx).unwrap_or(false),
             app_menu_bar: AppMenuBar::new(cx),
             project_picker_open: false,
             project_search,
@@ -224,50 +260,6 @@ impl ForgeShell {
             .and_then(|root| root.file_name())
             .map(|name| name.to_string_lossy().into_owned())
             .unwrap_or_else(|| "No folder open".to_string())
-    }
-
-    fn open_panel_tab(&mut self, panel: PanelId, window: &mut Window, cx: &mut Context<Self>) {
-        let build: BuildTabView = Rc::new(move |_, cx| {
-            cx.new(|_| PlaceholderView {
-                title: panel.title().into(),
-                description: format!("{} content will live here.", panel.title()).into(),
-            })
-            .into()
-        });
-        let spec = TabSpec {
-            key: panel.slug().into(),
-            title: panel.title().into(),
-            icon: panel.icon(),
-            path: None,
-            symbol: None,
-            dirty: false,
-            build,
-        };
-        self.open_tab(spec, window, cx);
-    }
-
-    /// Opens a dummy file as a tab; the content stands in for Zed's editor.
-    fn open_dummy_file(&mut self, index: usize, window: &mut Window, cx: &mut Context<Self>) {
-        let Some(file) = DUMMY_FILES.get(index) else { return };
-        let path = file.path;
-        let title = path.rsplit('/').next().unwrap_or(path);
-        let build: BuildTabView = Rc::new(move |_, cx| {
-            cx.new(|_| PlaceholderView {
-                title: path.into(),
-                description: "The editor will be embedded here.".into(),
-            })
-            .into()
-        });
-        let spec = TabSpec {
-            key: path.into(),
-            title: title.into(),
-            icon: gpui_component::Icon::new(gpui_component::IconName::File),
-            path: Some(path.into()),
-            symbol: file.symbol.map(Into::into),
-            dirty: file.dirty,
-            build,
-        };
-        self.open_tab(spec, window, cx);
     }
 
     pub(super) fn toggle_zoom(&mut self, cx: &mut Context<Self>) {
@@ -316,11 +308,28 @@ impl ForgeShell {
             return center;
         }
 
+        // Saves a dock's size when its divider is dragged; `index` is the
+        // dock's panel within its resizable group.
+        let on_resize = |position: DockPosition, index: usize, cx: &mut Context<Self>| {
+            let shell = cx.weak_entity();
+            move |state: &Entity<ResizableState>, _: &mut Window, cx: &mut App| {
+                if let Some(size) = state.read(cx).sizes().get(index).copied() {
+                    let _ = shell.update(cx, |shell, cx| shell.save_dock_size(position, size, cx));
+                }
+            }
+        };
+
         let center: AnyElement = match self.render_dock(DockPosition::Bottom, cx) {
             Some(dock) => v_resizable("forge-bottom-dock")
                 .with_state(&self.dock(DockPosition::Bottom).resize)
+                .on_resize(on_resize(DockPosition::Bottom, 1, cx))
                 .child(resizable_panel().child(center))
-                .child(resizable_panel().size(px(260.)).size_range(px(100.)..px(800.)).child(dock))
+                .child(
+                    resizable_panel()
+                        .size(self.dock(DockPosition::Bottom).size)
+                        .size_range(px(100.)..px(800.))
+                        .child(dock),
+                )
                 .into_any_element(),
             None => center,
         };
@@ -328,8 +337,14 @@ impl ForgeShell {
         let center: AnyElement = match self.render_dock(DockPosition::Right, cx) {
             Some(dock) => h_resizable("forge-right-dock")
                 .with_state(&self.dock(DockPosition::Right).resize)
+                .on_resize(on_resize(DockPosition::Right, 1, cx))
                 .child(resizable_panel().child(center))
-                .child(resizable_panel().size(px(280.)).size_range(px(180.)..px(640.)).child(dock))
+                .child(
+                    resizable_panel()
+                        .size(self.dock(DockPosition::Right).size)
+                        .size_range(px(180.)..px(640.))
+                        .child(dock),
+                )
                 .into_any_element(),
             None => center,
         };
@@ -337,7 +352,13 @@ impl ForgeShell {
         match self.render_dock(DockPosition::Left, cx) {
             Some(dock) => h_resizable("forge-left-dock")
                 .with_state(&self.dock(DockPosition::Left).resize)
-                .child(resizable_panel().size(px(260.)).size_range(px(180.)..px(640.)).child(dock))
+                .on_resize(on_resize(DockPosition::Left, 0, cx))
+                .child(
+                    resizable_panel()
+                        .size(self.dock(DockPosition::Left).size)
+                        .size_range(px(180.)..px(640.))
+                        .child(dock),
+                )
                 .child(resizable_panel().child(center))
                 .into_any_element(),
             None => center,

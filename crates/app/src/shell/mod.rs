@@ -2,6 +2,7 @@ mod app_menu;
 mod docks;
 mod dummy;
 mod forge_shell;
+mod host_delegate;
 mod nav_history;
 mod notifications;
 mod pane;

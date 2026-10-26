@@ -18,7 +18,7 @@ use gpui_component::{
 };
 
 use super::ForgeShell;
-use super::panels::{DockPosition, PanelId};
+use forge_host::DockPosition;
 
 impl ForgeShell {
     pub(super) fn render_status_bar(&self, window: &Window, cx: &mut Context<Self>) -> StatusBar {
@@ -71,11 +71,11 @@ impl ForgeShell {
     }
 
     fn panel_buttons(&self, position: DockPosition, cx: &mut Context<Self>) -> Vec<AnyElement> {
-        let ids: Vec<PanelId> = self.panels_in(position).collect();
+        let ids: Vec<&'static str> = self.panels_in(position).map(|p| p.info.id).collect();
         let mut buttons = Vec::with_capacity(ids.len() + 1);
         for id in ids {
             // Demo is a dev aid, kept visually apart from the product panels.
-            if id == PanelId::Demo {
+            if id == "demo" {
                 buttons.push(Separator::vertical().into_any_element());
             }
             buttons.push(self.panel_button(id, cx));
@@ -83,23 +83,25 @@ impl ForgeShell {
         buttons
     }
 
-    fn panel_button(&self, id: PanelId, cx: &mut Context<Self>) -> AnyElement {
+    fn panel_button(&self, id: &'static str, cx: &mut Context<Self>) -> AnyElement {
         let this = cx.weak_entity();
-        let current = self.panel_position(id);
+        let Some(panel) = self.panel(id) else { return div().into_any_element() };
+        let (current, title) = (panel.position, panel.info.title);
+        let tooltip = panel.info.tooltip.unwrap_or(title);
 
         div()
-            .id(("panel-button", id as usize))
+            .id(gpui::SharedString::from(format!("panel-button-{id}")))
             .child(
-                Button::new(("toggle-panel", id as usize))
+                Button::new(gpui::SharedString::from(format!("toggle-panel-{id}")))
                     .ghost()
                     .xsmall()
-                    .icon(id.icon())
-                    .tooltip(format!("{} (right-click to move)", id.title()))
+                    .icon(panel.info.icon.clone())
+                    .tooltip(format!("{tooltip} (right-click to move)"))
                     .selected(self.is_panel_visible(id))
                     .on_click(cx.listener(move |this, _, _, cx| this.toggle_panel(id, cx))),
             )
             .context_menu(move |menu, _, _| {
-                let mut menu = menu.label(id.title());
+                let mut menu = menu.label(title);
                 for position in DockPosition::ALL {
                     let this = this.clone();
                     menu = menu.item(

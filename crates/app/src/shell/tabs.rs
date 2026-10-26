@@ -3,16 +3,17 @@
 //! pinned tabs stay at the start of their group, "close others/all" skip
 //! pinned tabs, and an emptied pane folds away.
 
-use std::rc::Rc;
-
-use gpui::{AnyView, App, Context, SharedString, Window};
+use gpui::{AnyView, Context, SharedString, Window};
 use gpui_component::Icon;
 
 use super::ForgeShell;
 
 /// Builds a fresh view for a tab — kept on the tab so "Duplicate in Split
 /// View" can create a second, independent instance of the same content.
-pub(super) type BuildTabView = Rc<dyn Fn(&mut Window, &mut App) -> AnyView>;
+pub(super) use forge_host::BuildView as BuildTabView;
+/// What `open_tab` needs to create a tab; panels send it through
+/// `forge_host::Host::open_tab`.
+pub(super) use forge_host::TabRequest as TabSpec;
 
 #[derive(Clone)]
 pub(super) struct WorkspaceTab {
@@ -31,17 +32,6 @@ pub(super) struct WorkspaceTab {
     pub(super) pinned: bool,
     pub(super) build: BuildTabView,
     pub(super) view: AnyView,
-}
-
-/// What `open_tab` needs to create a tab.
-pub(super) struct TabSpec {
-    pub(super) key: SharedString,
-    pub(super) title: SharedString,
-    pub(super) icon: Icon,
-    pub(super) path: Option<SharedString>,
-    pub(super) symbol: Option<SharedString>,
-    pub(super) dirty: bool,
-    pub(super) build: BuildTabView,
 }
 
 /// Which pane a tab (or its context menu) belongs to.

@@ -2,6 +2,8 @@
 resolver = "2"
 members = [
     "crates/app",
+    "crates/branding",
+    "crates/shared/*",
     "crates/features/*/core",
     "crates/features/*/ui",
 ]
@@ -19,6 +21,12 @@ gpui-component-assets = { git = "https://github.com/mentenaz/Mentenaz.GPUI.git" 
 gpui_platform = { git = "https://github.com/mentenaz/Mentenaz.GPUI.git" }
 
 rust-embed = "8"
+dirs = "6"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+branding = { path = "crates/branding" }
+forge-host = { path = "crates/shared/host" }
 
 node-core = { path = "crates/features/node/core" }
 node-ui = { path = "crates/features/node/ui" }

@@ -1,0 +1,10 @@
+[package]
+name = "branding"
+description = "Product identity (names, ids, URL scheme) and the app's folders, in one place."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish = false
+
+[dependencies]
+dirs.workspace = true

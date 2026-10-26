@@ -8,7 +8,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 The source of truth for decisions and phase order is `forge-super-design.md` (§2 decisions, §12.6 phases). `forge-super-struktuur.md` (Afrikaans) is the earlier structure write-up it supersedes; kept for history.
 
-Status: phase 0 (shell look) is done. Panels, tab contents and docks still show placeholders; next is the host API (phase 1).
+Status: phase 0 (shell look) and phase 1 (host API, `branding`) are done. Panel contents are still placeholders; next is phase 1.5, the workspace backbone (files, file watching, git CLI).
 
 Repositories: this one is `github.com/mentenaz/Forge.Super` (public, GPL-3.0-or-later). The UI library is `github.com/mentenaz/Mentenaz.GPUI` (Apache-2.0), cloned at `E:\mentenaz\gpui`.
 
@@ -30,14 +30,18 @@ Workspace members are `crates/app` plus the globs `crates/features/*/core` and `
 - `crates/app` (package `mentenaz-forge-super`): the binary and the shell. Wires things together; will register the feature panels.
 - `crates/features/<name>/core` (`<name>-core`): **GPUI-free** domain code. `src/logic/` is pure domain (types, state, rules, commands), `src/backend/` is IO (processes, files, network, CLI wrappers). Must stay reusable from non-GPUI frontends (CLI, Tauri, tests).
 - `crates/features/<name>/ui` (`<name>-ui`): gpui-component views. `panel.rs` is the dock view, `workspace.rs` the tab-area view. Not yet registered with the shell.
-- Current features: `node`, `dotnet` (templates only). `crates/shared/` and `crates/branding/` don't exist yet; they arrive with phases 1–2.
+- `crates/branding` (`branding`): product name, ids and folders. Nothing else hard-codes them. Settings live in `%APPDATA%\Mentenaz\ForgeSuperDev2\settings.json`, state in `%LOCALAPPDATA%\Mentenaz\ForgeSuperDev2\state.json`.
+- `crates/shared/host` (`forge-host`): the host API (design doc §13). Panels register with `register_panel(PanelInfo, build)`; they reach the shell only through `Host` (open a tab, show/toggle a panel, notify, run a command), observe `Workspace::model`, and keep settings/state with `Settings` / `State` (dotted keys, e.g. `panels.<id>.dock`). A feature `ui` crate exposes `pub fn init(cx)` that registers its panel.
+- Start-up order matters (`crates/app/src/main.rs`): `gpui_component::init` → `forge_host::init` → each feature's `init` → `shell::init` (which registers placeholders only for ids no feature claimed).
+- Current features: `node`, `dotnet` (templates, registered through `forge-host`).
 
 ### The shell (`crates/app/src/shell/`)
 
 Laid out like the Zed edition: title bar, left/right/bottom docks, per-pane tab bars with a split, status bar. One concern per module:
 
 - `forge_shell.rs`: `ForgeShell` (all state), actions and key bindings, the overall layout (`render_main_area`).
-- `docks.rs`, `panels.rs`: Zed's dock model (three docks, several panels each, one shown); `PanelId` lists every panel with its title, icon and default dock. `PlaceholderPanel`/`PlaceholderView` stand in for real views.
+- `docks.rs`, `panels.rs`: Zed's dock model (three docks, several panels each, one shown), built from the panel registry; dock layout persists. `panels.rs` registers the built-in panels (ids, icons, default docks) as placeholders through `forge-host`.
+- `host_delegate.rs`: the shell's implementation of `forge_host::HostDelegate`.
 - `tabs.rs`, `pane.rs`, `tab_bar.rs`, `tab_context_menu.rs`, `tab_switcher.rs`, `nav_history.rs`: tab state and operations, panes and breadcrumbs, the tab strip (drag and drop, pinning, folder hints), the right-click menu, Ctrl+Tab switcher, back/forward.
 - `title_bar.rs`, `app_menu.rs`, `recent_projects.rs`, `worktree_picker.rs`: title bar, application menu (☰ or menu bar row), project and worktree pickers.
 - `status_bar.rs`, `status_items.rs`, `notifications.rs`: status bar layout (Zed's item order, dock buttons); its items (project search, language server menu, diagnostics, active file, activity, pending keystrokes, language picker); toasts and the notification centre.

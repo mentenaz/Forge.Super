@@ -126,6 +126,7 @@ impl ForgeShell {
                         move |_, _, cx| {
                             this.update(cx, |this, cx| {
                                 this.show_menus = !this.show_menus;
+                                let _ = forge_host::Settings::set("show_menus", this.show_menus, cx);
                                 cx.notify();
                             })
                             .ok();

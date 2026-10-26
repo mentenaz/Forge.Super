@@ -22,7 +22,6 @@ use super::forge_shell::{
     GoBack, GoForward, SplitActiveTab, ToggleBottomDock, ToggleLeftDock, ToggleRightDock, ToggleZoom,
 };
 use super::notifications::NoticeKind;
-use super::panels::PanelId;
 
 const BRAND: &str = "Forge Super";
 
@@ -187,10 +186,10 @@ impl ForgeShell {
             let mode = if Theme::global(cx).mode.is_dark() { ThemeMode::Light } else { ThemeMode::Dark };
             Theme::change(mode, Some(window), cx);
         })
-        .on_action(cx.listener(|this, _: &ToggleExplorer, _, cx| this.toggle_panel(PanelId::Explorer, cx)))
-        .on_action(cx.listener(|this, _: &ToggleOutline, _, cx| this.toggle_panel(PanelId::Outline, cx)))
-        .on_action(cx.listener(|this, _: &ToggleGit, _, cx| this.toggle_panel(PanelId::Git, cx)))
-        .on_action(cx.listener(|this, _: &ToggleTerminal, _, cx| this.toggle_panel(PanelId::Terminal, cx)))
-        .on_action(cx.listener(|this, _: &ToggleDebugger, _, cx| this.toggle_panel(PanelId::Debugger, cx)))
+        .on_action(cx.listener(|this, _: &ToggleExplorer, _, cx| this.toggle_panel("explorer", cx)))
+        .on_action(cx.listener(|this, _: &ToggleOutline, _, cx| this.toggle_panel("outline", cx)))
+        .on_action(cx.listener(|this, _: &ToggleGit, _, cx| this.toggle_panel("git", cx)))
+        .on_action(cx.listener(|this, _: &ToggleTerminal, _, cx| this.toggle_panel("terminal", cx)))
+        .on_action(cx.listener(|this, _: &ToggleDebugger, _, cx| this.toggle_panel("debugger", cx)))
     }
 }

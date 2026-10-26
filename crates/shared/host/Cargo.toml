@@ -1,0 +1,14 @@
+[package]
+name = "forge-host"
+description = "The contract between the Forge Super shell and its panels: panel registration, the host handle, settings, saved state and the workspace model."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish = false
+
+[dependencies]
+branding.workspace = true
+gpui.workspace = true
+gpui-component.workspace = true
+serde.workspace = true
+serde_json.workspace = true
