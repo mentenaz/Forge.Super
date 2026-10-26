@@ -23,11 +23,10 @@ ignore = [
     { id = "RUSTSEC-2026-0371", reason = "zbus_names, Linux accessibility only" },
     { id = "RUSTSEC-2026-0370", reason = "zvariant, Linux accessibility only" },
     { id = "RUSTSEC-2026-0372", reason = "zvariant_derive, Linux accessibility only" },
-    # gpui-component's own use was replaced by pastey (Mentenaz.GPUI 7bbf750);
-    # it remains through gpui's `image` (OpenEXR decoder: exr -> pulp) and
-    # `metal` on Apple. Dropping the exr image format in gpui would remove it
-    # from Windows builds.
-    { id = "RUSTSEC-2024-0436", reason = "paste, via image's OpenEXR decoder and metal (Apple); compile-time macro only" },
+    # gpui-component's own use was replaced by pastey (Mentenaz.GPUI 7bbf750)
+    # and the OpenEXR image format was dropped (9533769), so it's no longer in
+    # Windows builds; it remains through `metal` on Apple.
+    { id = "RUSTSEC-2024-0436", reason = "paste, via metal (Apple only); compile-time macro only" },
 ]
 
 [licenses]
