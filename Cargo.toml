@@ -17,10 +17,10 @@ license = "GPL-3.0-or-later"
 [workspace.dependencies]
 # Mentenaz.GPUI, pinned to a commit. Bump all four together, in a commit of
 # its own ("bump gpui to <sha>").
-gpui = { git = "https://github.com/mentenaz/Mentenaz.GPUI.git", rev = "78684c9bd7e0f906a438965fcc4e15f95f7e1022" }
-gpui-component = { git = "https://github.com/mentenaz/Mentenaz.GPUI.git", rev = "78684c9bd7e0f906a438965fcc4e15f95f7e1022" }
-gpui-component-assets = { git = "https://github.com/mentenaz/Mentenaz.GPUI.git", rev = "78684c9bd7e0f906a438965fcc4e15f95f7e1022" }
-gpui_platform = { git = "https://github.com/mentenaz/Mentenaz.GPUI.git", rev = "78684c9bd7e0f906a438965fcc4e15f95f7e1022" }
+gpui = { git = "https://github.com/mentenaz/Mentenaz.GPUI.git", rev = "7bbf7509c92e2e6b2587b69e5805725909c21d4c" }
+gpui-component = { git = "https://github.com/mentenaz/Mentenaz.GPUI.git", rev = "7bbf7509c92e2e6b2587b69e5805725909c21d4c" }
+gpui-component-assets = { git = "https://github.com/mentenaz/Mentenaz.GPUI.git", rev = "7bbf7509c92e2e6b2587b69e5805725909c21d4c" }
+gpui_platform = { git = "https://github.com/mentenaz/Mentenaz.GPUI.git", rev = "7bbf7509c92e2e6b2587b69e5805725909c21d4c" }
 
 rust-embed = "8"
 dirs = "6"
