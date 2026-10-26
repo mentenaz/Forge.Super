@@ -1,8 +1,10 @@
 [package]
 name = "node-ui"
+description = "Node.js panel and workspace views, built on gpui-component."
 version.workspace = true
 edition.workspace = true
 license.workspace = true
+publish = false
 
 [dependencies]
 node-core.workspace = true

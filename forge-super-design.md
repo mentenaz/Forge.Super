@@ -337,7 +337,7 @@ Measured by counting references to Zed crates per panel:
 **Consequence:** panels are **ported, not rebuilt or mocked**. Their gpui-component render code is kept; only the thin Zed layer is swapped for a small host API (12.6, phase 1). No dummy-data step for panel contents.
 
 ### 12.6 Phases
-0. **Shell look:** settle the gpui-component frame (title bar, left panels, tab bar, split view, bottom docks, status bar). Placeholders are enough for the contents.
+0. **Shell look:** settle the gpui-component frame (title bar, left panels, tab bar, split view, bottom docks, status bar). Placeholders are enough for the contents. **Done (2026-10-26):** title bar with application menu, project, worktree and branch pickers; Zed's three-dock model; per-pane tab bars (split, pinning, drag and drop, folder hints, breadcrumbs); Zed-style status bar and notifications; Forge Dark theme at 13px.
 1. **Host API in `crates/shared/`:** the few things panels currently take from Zed (workspace root, open a tab, toggle a dock, saved state and settings, notifications), implemented by the shell.
 2. **Foundation:** pin gpui `rev`, `branding` crate, `LICENSE`/`NOTICE`, `cargo deny`.
 3. **Shared code:** script runner, `runtime_processes`, `ide_env`, `git_credential`.

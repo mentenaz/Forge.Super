@@ -1,8 +1,10 @@
 [package]
 name = "dotnet-ui"
+description = ".NET panel and workspace views, built on gpui-component."
 version.workspace = true
 edition.workspace = true
 license.workspace = true
+publish = false
 
 [dependencies]
 dotnet-core.workspace = true

@@ -1,6 +1,6 @@
 //! The full-width bottom bar, laid out like the Zed edition's:
 //! - left: the left dock's panel buttons, diagnostics, language servers;
-//! - right: the active editor's cursor/language/line ending/encoding, the
+//! - right: the active editor's `line:column` and language (Zed's format), the
 //!   bottom dock's panel buttons, the right dock's panel buttons, and the
 //!   notification bell.
 //!
@@ -32,14 +32,20 @@ impl ForgeShell {
             .left(self.render_diagnostics(cx))
             .left(self.render_language_servers(cx));
 
-        // Editor details only make sense while a tab is open.
+        // Editor details, in Zed's format: `line:column` and the language,
+        // plus line ending and encoding only when they aren't the defaults
+        // (LF, UTF-8). Only while a tab is open.
         if self.active_tab.is_some() {
             let editor = &self.status.editor;
             bar = bar
-                .right(self.status_text(format!("Ln {}, Col {}", editor.line, editor.column), cx))
-                .right(self.status_text(editor.language.clone(), cx))
-                .right(self.status_text(editor.line_ending.clone(), cx))
-                .right(self.status_text(editor.encoding.clone(), cx));
+                .right(self.status_text(format!("{}:{}", editor.line, editor.column), cx))
+                .right(self.status_text(editor.language.clone(), cx));
+            if editor.line_ending != "LF" {
+                bar = bar.right(self.status_text(editor.line_ending.clone(), cx));
+            }
+            if editor.encoding != "UTF-8" {
+                bar = bar.right(self.status_text(editor.encoding.clone(), cx));
+            }
         }
 
         for position in [DockPosition::Bottom, DockPosition::Right] {

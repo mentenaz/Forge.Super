@@ -1,5 +1,9 @@
 [package]
 name = "dotnet-core"
+description = ".NET SDKs, projects and NuGet packages: domain logic and IO, without gpui."
 version.workspace = true
 edition.workspace = true
 license.workspace = true
+publish = false
+
+[dependencies]
