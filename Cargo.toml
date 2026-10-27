@@ -41,6 +41,7 @@ forge-git-credential = { path = "crates/shared/git-credential" }
 forge-host = { path = "crates/shared/host" }
 forge-http = { path = "crates/shared/http" }
 forge-ide-env = { path = "crates/shared/ide-env" }
+forge-process = { path = "crates/shared/process" }
 forge-runtime-processes = { path = "crates/shared/runtime-processes" }
 forge-runtime-processes-ui = { path = "crates/shared/runtime-processes-ui" }
 forge-script-runner = { path = "crates/shared/script-runner" }

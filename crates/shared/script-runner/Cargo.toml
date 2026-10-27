@@ -8,6 +8,7 @@ publish = false
 
 [dependencies]
 forge-ide-env.workspace = true
+forge-process.workspace = true
 
 [dev-dependencies]
 tempfile.workspace = true

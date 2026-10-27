@@ -1,0 +1,9 @@
+[package]
+name = "forge-process"
+description = "Helper to spawn std::process::Command without console window popup on Windows. No gpui."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish = false
+
+[dependencies]

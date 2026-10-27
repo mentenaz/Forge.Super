@@ -1740,6 +1740,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "forge-process"
+version = "0.1.0"
+
+[[package]]
 name = "forge-runtime-processes"
 version = "0.1.0"
 dependencies = [
@@ -1761,6 +1765,7 @@ name = "forge-script-runner"
 version = "0.1.0"
 dependencies = [
  "forge-ide-env",
+ "forge-process",
  "tempfile",
 ]
 
@@ -1768,6 +1773,7 @@ dependencies = [
 name = "forge-workspace"
 version = "0.1.0"
 dependencies = [
+ "forge-process",
  "ignore",
  "notify",
  "tempfile",

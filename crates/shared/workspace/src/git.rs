@@ -5,7 +5,8 @@
 use std::ffi::OsStr;
 use std::fmt;
 use std::path::{Path, PathBuf};
-use std::process::Command;
+
+use forge_process::new_command;
 
 /// What git said when a command failed (its stderr), or why it couldn't run.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -27,7 +28,7 @@ where
     I: IntoIterator<Item = S>,
     S: AsRef<OsStr>,
 {
-    let mut command = Command::new("git");
+    let mut command = new_command("git");
     command
         .arg("-C")
         .arg(dir)
@@ -35,12 +36,6 @@ where
         .args(args)
         .env("GIT_TERMINAL_PROMPT", "0")
         .env("GIT_EDITOR", "true");
-    #[cfg(windows)]
-    {
-        use std::os::windows::process::CommandExt;
-        const CREATE_NO_WINDOW: u32 = 0x0800_0000;
-        command.creation_flags(CREATE_NO_WINDOW);
-    }
     let output = command
         .output()
         .map_err(|err| GitError(format!("couldn't run git: {err}")))?;

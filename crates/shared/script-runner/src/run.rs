@@ -162,19 +162,6 @@ fn with_ide_runtimes(
     env
 }
 
-/// A command that, on Windows, doesn't open a console window of its own.
-fn new_command(program: &str) -> Command {
-    #[allow(unused_mut)]
-    let mut command = Command::new(program);
-    #[cfg(windows)]
-    {
-        use std::os::windows::process::CommandExt as _;
-        const CREATE_NO_WINDOW: u32 = 0x0800_0000;
-        command.creation_flags(CREATE_NO_WINDOW);
-    }
-    command
-}
-
 /// Starts the shell for `command`, with its output piped.
 fn spawn_shell(
     command: &str,
@@ -200,13 +187,13 @@ fn spawn_shell(
     #[cfg(windows)]
     {
         let merged = format!("& {{ {command} }} *>&1; exit $LASTEXITCODE");
-        let mut pwsh = new_command("pwsh.exe");
+        let mut pwsh = forge_process::new_command("pwsh.exe");
         pwsh.args(["-NoProfile", "-NonInteractive", "-Command", &merged]);
         prepare(&mut pwsh);
         // Without PowerShell 7, `cmd`: its `2>&1` merges stderr itself, and
         // it passes on the exit code.
         pwsh.spawn().or_else(|_| {
-            let mut cmd = new_command("cmd.exe");
+            let mut cmd = forge_process::new_command("cmd.exe");
             cmd.args(["/C", &format!("{command} 2>&1")]);
             prepare(&mut cmd);
             cmd.spawn()
@@ -216,7 +203,7 @@ fn spawn_shell(
     #[cfg(not(windows))]
     {
         use std::os::unix::process::CommandExt as _;
-        let mut sh = new_command("sh");
+        let mut sh = forge_process::new_command("sh");
         sh.args(["-c", &format!("{{ {command}\n}} 2>&1")]);
         prepare(&mut sh);
         // Its own process group, so stopping kills everything the command
@@ -229,7 +216,7 @@ fn spawn_shell(
 /// Force-kills the process `pid` and everything it started.
 #[cfg(windows)]
 fn kill_process_tree(pid: u32) {
-    let _ = new_command("taskkill.exe")
+    let _ = forge_process::new_command("taskkill.exe")
         .args(["/F", "/T", "/PID", &pid.to_string()])
         .output();
 }
@@ -240,14 +227,16 @@ fn kill_process_tree(pid: u32) {
 #[cfg(not(windows))]
 fn kill_process_tree(pid: u32) {
     let group = format!("-{pid}");
-    let killed_group = new_command("kill")
+    let killed_group = forge_process::new_command("kill")
         .args(["-9", "--", &group])
         .output()
         .is_ok_and(|output| output.status.success());
     // A shell that already exited leaves no group to signal; whatever is
     // left is then at most the process itself.
     if !killed_group {
-        let _ = new_command("kill").args(["-9", &pid.to_string()]).output();
+        let _ = forge_process::new_command("kill")
+            .args(["-9", &pid.to_string()])
+            .output();
     }
 }
 
