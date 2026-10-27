@@ -7,3 +7,17 @@ license.workspace = true
 publish = false
 
 [dependencies]
+fnm.workspace = true
+dunce.workspace = true
+forge-ide-env.workspace = true
+forge-process.workspace = true
+log.workspace = true
+semver.workspace = true
+serde = { workspace = true, features = ["derive"] }
+serde_json.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true
+
+[target.'cfg(target_os = "windows")'.dependencies]
+windows-registry.workspace = true

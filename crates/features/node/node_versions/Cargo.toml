@@ -1,0 +1,27 @@
+[package]
+name = "node_versions"
+description = "Built-in Node.js version management for the Node panel, on the fnm library — no fnm or nvm install needed."
+# GPL because it links fnm, which is GPL-3.0. Kept as its own crate so the
+# licence stops here and at the panels that use it, not at `node_backend`.
+license = "GPL-3.0-or-later"
+edition.workspace = true
+version = "0.1.0"
+publish = false
+
+[lib]
+path = "src/node_versions.rs"
+doctest = false
+
+[dependencies]
+fnm.workspace = true
+branding.workspace = true
+# Reads the Node.js version an SPFx project records in `.yo-rc.json`.
+serde_json.workspace = true
+
+# The link to the active version is a directory junction on Windows, which
+# needs no privilege to create (a directory symlink does).
+[target.'cfg(windows)'.dependencies]
+junction.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true
