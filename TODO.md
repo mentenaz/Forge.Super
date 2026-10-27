@@ -63,12 +63,15 @@ Sizes are lines of Rust in the Zed edition (`E:\zed_Source\crates\ÔÇª`). "Zed
 - [x] **Decide:** HTTP client crate: `reqwest`. No Zed service URLs.
 - [x] `crates/shared/http` (`forge-http`): a small async client (GET with JSON, download to file with progress, user agent from `branding`), used by the npm/NuGet/PyPI/crates.io searches, the Python version downloads and Helm.
 - [x] `crates/shared/process` (`forge-process`): `new_command(program)` without a console window, replacing `gpui_util::new_std_command` in every backend.
-- [ ] Workspace file events: `forge_host::Workspace` emits an event for changed paths (from the existing watcher), so panels can rescan when `package.json`, `*.csproj`, `Cargo.toml` or `pyproject.toml` change (replaces `project::Event` / `PathChange`).
-- [ ] Restorable tabs: a tab kind registry (`register_tab_kind(kind, restore)`), with open tabs saved in `State` and reopened at start-up (replaces `register_serializable_item`, used by the manager pages and Dashboard).
-- [ ] Hide a panel's status-bar button: `panels.<id>.button = false` in settings, plus "Hide button" in the button's context menu (replaces `HideStatusItem`).
-- [ ] `crates/shared/credentials` (`forge-credentials`): read, write and delete secrets in Windows Credential Manager (the `keyring` crate), keyed with `branding::PRODUCT.id` (replaces `zed_credentials_provider`, used by Helm and Database).
-- [ ] Settings defaults per panel: each feature can supply defaults for its own `settings.json` keys.
-- [ ] Update `forge-super-design.md` ┬º13 (host API) and CLAUDE.md with the additions.
+- [x] Workspace file events: `Workspace` emits `WorkspaceEvent::PathsChanged` from the watcher; `event.touches(&["package.json", "*.csproj", ...])` filters by file name (replaces `project::Event` / `PathChange`). Headless test with the real watcher.
+- [x] Restorable tabs: `register_tab_kind(cx, kind, restore)` in `forge-host`; a `TabRequest` with `restore: Some(TabRestore::new(kind, payload))` is saved under `tabs` in `State` (`crates/app/src/shell/tab_restore.rs`) and reopened at start-up. Explorer file tabs use it (kind `file`). Manager pages and Dashboard register their own kinds when ported.
+- [x] Hide a panel's status-bar button: `panels.<id>.button = false` in settings, plus "Hide button" in the button's context menu (replaces `HideStatusItem`). Settings are read at start-up, so showing it again means editing the file.
+- [x] `crates/shared/credentials` (`forge-credentials`): `CredentialStore` (`get`/`set`/`delete`) over Windows Credential Manager (`keyring`), keyed with `branding::PRODUCT.id`, plus `MemoryStore` for tests (replaces `zed_credentials_provider`, used by Helm and Database).
+- [x] Settings defaults per panel: `Settings::set_default(key, value, cx)` from a feature's `init`; read by `Settings::get` / `panel` when the file doesn't set the key, never written to it.
+- [x] `crates/shared/store` (`forge-store`): `JsonStore` out of `forge-host`, gpui-free, so `core` crates can keep their own JSON files under `branding::data_dir()`.
+- [x] `forge-http`: `HttpTransport` trait (object-safe, `send` + `download`, `get_text`/`get_json` helpers) with `FakeTransport` for tests; backends take `Arc<dyn HttpTransport>`.
+- [x] `forge-ide-env`: `machine_path()` / `merged_path()` / `path_with(dirs)` (Windows registry PATH merged, deduplicated), replacing the `path_env.rs` copied into five Zed backends.
+- [ ] Update `forge-super-design.md` ┬º13 (host API) with the additions above (CLAUDE.md is done).
 
 ### 4.1 Cockpit, Processes, Script Runner (prove the approach)
 
@@ -172,3 +175,4 @@ Each is one feature: `<name>-core` (backend + version store) and `<name>-ui` (ru
 - [ ] One feature per runtime with its package manager (suggested), e.g. `node` = Node panel + npm manager.
 - [x] The stray formatting changes: committed as formatting-only commit.
 - [ ] Phase 5: how Zed's `gpui` and Mentenaz.GPUI's `gpui` become one (design doc open item 1).
+- [ ] Phase 5: Zed's `workspace`/`project` expect its SQLite `db` crate. Vendor `db` (SQLite dependency, licence check) or stub it over `forge-store`. Until then the platform keeps everything in JSON (`settings.json`, `state.json`); SQLite is not used anywhere.
