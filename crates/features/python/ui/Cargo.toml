@@ -1,0 +1,13 @@
+[package]
+name = "python-ui"
+description = "Python panel and workspace views, built on gpui-component."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish = false
+
+[dependencies]
+python-core.workspace = true
+gpui.workspace = true
+gpui-component.workspace = true
+forge-host.workspace = true
