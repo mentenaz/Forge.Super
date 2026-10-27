@@ -14,7 +14,7 @@ pub struct Product {
     /// Short name, for menus ("Quit Forge Super").
     pub short: &'static str,
     /// Folder under the platform's config/data folders, e.g.
-    /// `%APPDATA%\Mentenaz\ForgeSuperDev2`.
+    /// `%APPDATA%\ForgeSuperDev2`.
     pub dir: &'static [&'static str],
     /// Reverse-DNS application id.
     pub id: &'static str,
@@ -30,7 +30,7 @@ pub struct Product {
 pub const PRODUCT: Product = Product {
     display: "Mentenaz Forge Super",
     short: "Forge Super",
-    dir: &["Mentenaz", "ForgeSuperDev2"],
+    dir: &["ForgeSuperDev2"],
     id: "dev.mentenaz.forge-super.dev2",
     ipc: "Forge-Super-Dev2",
     scheme: "forgesuper-dev2",
@@ -43,13 +43,13 @@ fn under(base: Option<PathBuf>) -> PathBuf {
     path
 }
 
-/// Settings (`settings.json`): `%APPDATA%\Mentenaz\ForgeSuperDev2` on
+/// Settings (`settings.json`): `%APPDATA%\ForgeSuperDev2` on
 /// Windows, the platform's config folder elsewhere.
 pub fn config_dir() -> PathBuf {
     under(dirs::config_dir())
 }
 
-/// State, logs and caches: `%LOCALAPPDATA%\Mentenaz\ForgeSuperDev2` on
+/// State, logs and caches: `%LOCALAPPDATA%\ForgeSuperDev2` on
 /// Windows, the platform's local data folder elsewhere.
 pub fn data_dir() -> PathBuf {
     under(dirs::data_local_dir())
@@ -81,10 +81,7 @@ mod tests {
     fn windows_uses_appdata_and_localappdata() {
         let appdata = PathBuf::from(std::env::var("APPDATA").unwrap());
         let local = PathBuf::from(std::env::var("LOCALAPPDATA").unwrap());
-        assert_eq!(
-            config_dir(),
-            appdata.join("Mentenaz").join("ForgeSuperDev2")
-        );
-        assert_eq!(data_dir(), local.join("Mentenaz").join("ForgeSuperDev2"));
+        assert_eq!(config_dir(), appdata.join("ForgeSuperDev2"));
+        assert_eq!(data_dir(), local.join("ForgeSuperDev2"));
     }
 }
