@@ -6,6 +6,7 @@ members = [
     "crates/shared/*",
     "crates/features/*/core",
     "crates/features/*/ui",
+    "crates/features/*/node_versions",
 ]
 default-members = ["crates/app"]
 
@@ -15,33 +16,55 @@ edition = "2024"
 license = "GPL-3.0-or-later"
 
 [workspace.dependencies]
-# Mentenaz.GPUI, pinned to a commit. Bump all four together, in a commit of
+# Mentenaz.GPUI, pinned to a commit. Bump them all together, in a commit of
 # its own ("bump gpui to <sha>").
 gpui = { git = "https://github.com/mentenaz/Mentenaz.GPUI.git", rev = "5616fdfcb90ffd3a94a3d4a4ceb4da9519b310c1" }
 gpui-component = { git = "https://github.com/mentenaz/Mentenaz.GPUI.git", rev = "5616fdfcb90ffd3a94a3d4a4ceb4da9519b310c1" }
 gpui-component-assets = { git = "https://github.com/mentenaz/Mentenaz.GPUI.git", rev = "5616fdfcb90ffd3a94a3d4a4ceb4da9519b310c1" }
 gpui_platform = { git = "https://github.com/mentenaz/Mentenaz.GPUI.git", rev = "5616fdfcb90ffd3a94a3d4a4ceb4da9519b310c1" }
+gpui_util = { git = "https://github.com/mentenaz/Mentenaz.GPUI.git", rev = "5616fdfcb90ffd3a94a3d4a4ceb4da9519b310c1" }
+path = { git = "https://github.com/mentenaz/Mentenaz.GPUI.git", rev = "5616fdfcb90ffd3a94a3d4a4ceb4da9519b310c1" }
 
 rust-embed = "8"
 dirs = "6"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 ignore = "0.4"
+
+tokio = { version = "1", features = ["rt-multi-thread"] }
 # Zed's fork of notify, the same pin Mentenaz.GPUI uses, so there is one copy.
 notify = { git = "https://github.com/zed-industries/notify", rev = "d842f16b2716bd60f09caf3ae3a894237ab38f54" }
 tempfile = "3"
 futures = "0.3"
 log = "0.4"
+# Windows Credential Manager (and the platforms' own stores elsewhere).
+keyring = { version = "3", default-features = false, features = ["windows-native", "apple-native", "sync-secret-service"] }
+reqwest = { version = "0.12", default-features = false, features = ["rustls-tls", "json", "stream"] }
+thiserror = "1"
 sysinfo = { version = "0.39", default-features = false, features = ["system"] }
 # The version gpui uses on Windows, so there is one copy.
 windows = "0.62"
+windows-registry = "0.6"
+
+semver = { version = "1.0", features = ["serde"] }
+toml = { version = "0.9", default-features = false, features = ["std", "serde", "parse"] }
+urlencoding = "2.1.2"
+dunce = "1.0"
+sha2 = "0.10"
+flate2 = "1"
+tar = "0.4"
+junction = "1.2"
+fnm = { git = "https://github.com/mentenaz/fnm", rev = "ecbecf998f425b884f5be91058d1d87e4cf9c7d1", default-features = false }
+
 
 branding = { path = "crates/branding" }
+forge-credentials = { path = "crates/shared/credentials" }
 forge-git-credential = { path = "crates/shared/git-credential" }
 forge-host = { path = "crates/shared/host" }
 forge-http = { path = "crates/shared/http" }
 forge-ide-env = { path = "crates/shared/ide-env" }
 forge-process = { path = "crates/shared/process" }
+forge-store = { path = "crates/shared/store" }
 forge-runtime-processes = { path = "crates/shared/runtime-processes" }
 forge-runtime-processes-ui = { path = "crates/shared/runtime-processes-ui" }
 forge-script-runner = { path = "crates/shared/script-runner" }
@@ -54,3 +77,6 @@ dotnet-ui = { path = "crates/features/dotnet/ui" }
 explorer-ui = { path = "crates/features/explorer/ui" }
 git-ui = { path = "crates/features/git/ui" }
 script-runner-ui = { path = "crates/features/script-runner/ui" }
+python-core = { path = "crates/features/python/core" }
+python-ui = { path = "crates/features/python/ui/" }
+node_versions = { path = "crates/features/node/node_versions/" }

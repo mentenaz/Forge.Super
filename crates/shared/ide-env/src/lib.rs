@@ -24,8 +24,10 @@ use std::path::{Path, PathBuf};
 use std::sync::RwLock;
 
 mod git;
+mod machine_path;
 
 pub use git::*;
+pub use machine_path::{machine_path, merged_path, path_with};
 
 /// Answers with the folders a process started in `directory` should have
 /// first on its `PATH` for one runtime: usually one folder, or none when the

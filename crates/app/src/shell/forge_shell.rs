@@ -121,6 +121,8 @@ pub struct ForgeShell {
     /// Tab ids, most recently active first (see `sync_tab_mru`).
     pub(super) tab_mru: VecDeque<usize>,
     pub(super) last_seen_active_tab_id: Option<usize>,
+    /// Set once the saved tabs have been reopened; until then nothing is saved.
+    pub(super) tabs_ready: bool,
     pub(super) tab_switcher: Option<TabSwitcherState>,
     pub(super) tab_switcher_commit_task: Option<Task<()>>,
     /// Right-clicked tab's group, index and click position (`None` = closed).
@@ -154,6 +156,7 @@ impl ForgeShell {
         let shell = cx.new(|cx| Self::new(window, cx));
         shell.read(cx).focus_handle.clone().focus(window, cx);
         Host::set_delegate(Rc::new(ShellHost(shell.downgrade())), cx);
+        shell.update(cx, |shell, cx| shell.restore_tabs(window, cx));
 
         // A settings or state file that couldn't be read is reported, not
         // fatal: the defaults are used and the bad file is kept aside.
@@ -202,6 +205,10 @@ impl ForgeShell {
         cx.observe(&Workspace::model(cx), |_, _, cx| cx.notify())
             .detach();
 
+        // Save the open tabs whenever the shell changes.
+        cx.observe(&cx.entity(), |this, _, cx| this.save_tabs(cx))
+            .detach();
+
         // Theme, font sizes: save whatever changes them (title bar toggle,
         // menu, Appearance settings).
         cx.observe_global::<Theme>(|_, cx| super::theme::save(cx))
@@ -248,6 +255,7 @@ impl ForgeShell {
             zoomed: false,
             tab_mru: VecDeque::new(),
             last_seen_active_tab_id: None,
+            tabs_ready: false,
             tab_switcher: None,
             tab_switcher_commit_task: None,
             tab_context_menu: None,

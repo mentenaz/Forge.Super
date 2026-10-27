@@ -39,6 +39,7 @@ fn main() {
         script_runner_ui::init(cx);
         node_ui::init(cx);
         dotnet_ui::init(cx);
+        python_ui::init(cx);
         shell::init(cx);
 
         let bounds = WindowBounds::centered(size(px(1400.0), px(900.0)), cx);

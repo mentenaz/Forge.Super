@@ -10,15 +10,18 @@
 //! - Git: [`Workspace::git`] (branch, branches, worktrees, status), kept up
 //!   to date by the file watcher, and operations that return a [`Task`] with
 //!   git's error message on failure.
+//! - File events: [`WorkspaceEvent::PathsChanged`] emitted when files/folders change,
+//!   allowing panels to rescan when `package.json`, `Cargo.toml`, etc. change.
 
 use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
+use std::sync::Arc;
 
 pub use forge_workspace::git::{FileState, FileStatus, GitError, Worktree};
 pub use forge_workspace::tree::DirEntry;
 use forge_workspace::{git::Repository, tree, watch};
 use futures::{StreamExt, channel::mpsc};
-use gpui::{App, AppContext, Context, Entity, Global, Task};
+use gpui::{App, AppContext, Context, Entity, EventEmitter, Global, Task};
 
 /// Git state of the workspace's repository.
 #[derive(Clone, Debug, Default)]
@@ -43,6 +46,36 @@ impl GitState {
     }
 }
 
+/// Events emitted by the workspace model for panels to subscribe to.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum WorkspaceEvent {
+    /// Files or folders in the workspace changed.
+    PathsChanged(Arc<Vec<PathBuf>>),
+}
+
+impl WorkspaceEvent {
+    /// Whether a changed path has one of these file names. A name starting
+    /// with `*` matches by ending, e.g. `"*.csproj"`; any other name must
+    /// match exactly (`"package.json"`). Names are compared without regard to
+    /// case, as on Windows.
+    pub fn touches(&self, names: &[&str]) -> bool {
+        let WorkspaceEvent::PathsChanged(paths) = self;
+        paths.iter().any(|path| {
+            let Some(file) = path.file_name().and_then(|name| name.to_str()) else {
+                return false;
+            };
+            let file = file.to_lowercase();
+            names.iter().any(|name| {
+                let name = name.to_lowercase();
+                match name.strip_prefix('*') {
+                    Some(ending) => file.ends_with(ending),
+                    None => file == name,
+                }
+            })
+        })
+    }
+}
+
 pub struct Workspace {
     root: Option<PathBuf>,
     repo: Option<Repository>,
@@ -55,21 +88,14 @@ pub struct Workspace {
     generation: u64,
 }
 
+impl EventEmitter<WorkspaceEvent> for Workspace {}
+
 struct GlobalWorkspace(Entity<Workspace>);
 
 impl Global for GlobalWorkspace {}
 
 pub(crate) fn init(cx: &mut App) {
-    let model = cx.new(|_| Workspace {
-        root: None,
-        repo: None,
-        git: None,
-        dirs: HashMap::new(),
-        loading: HashSet::new(),
-        _watcher: None,
-        _watch_task: None,
-        generation: 0,
-    });
+    let model = cx.new(|_| Workspace::empty());
     cx.set_global(GlobalWorkspace(model));
 }
 
@@ -90,6 +116,19 @@ fn load_git(root: &Path) -> (Option<Repository>, Option<GitState>) {
 }
 
 impl Workspace {
+    fn empty() -> Self {
+        Self {
+            root: None,
+            repo: None,
+            git: None,
+            dirs: HashMap::new(),
+            loading: HashSet::new(),
+            _watcher: None,
+            _watch_task: None,
+            generation: 0,
+        }
+    }
+
     /// The workspace model, to read or observe.
     pub fn model(cx: &App) -> Entity<Workspace> {
         cx.global::<GlobalWorkspace>().0.clone()
@@ -212,6 +251,11 @@ impl Workspace {
         }
         // File edits change git status; .git changes change branches/refs.
         self.refresh_git(cx);
+
+        // Emit workspace file events so interested panels (Node, Rust, etc.) can rescan.
+        if !changes.paths.is_empty() {
+            cx.emit(WorkspaceEvent::PathsChanged(Arc::new(changes.paths)));
+        }
     }
 
     /// Runs a git operation in the background, then re-reads git state.
@@ -288,5 +332,58 @@ impl Workspace {
     ) -> Task<std::io::Result<String>> {
         cx.background_executor()
             .spawn(async move { std::fs::read_to_string(path) })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::cell::RefCell;
+    use std::rc::Rc;
+    use std::time::{Duration, Instant};
+
+    use gpui::TestAppContext;
+
+    fn event(paths: &[&str]) -> WorkspaceEvent {
+        WorkspaceEvent::PathsChanged(Arc::new(paths.iter().map(PathBuf::from).collect()))
+    }
+
+    #[test]
+    fn touches_matches_file_names_and_endings_without_case() {
+        let changed = event(&["app/Package.json", "app/src/App.CSProj", "notes.txt"]);
+        assert!(changed.touches(&["package.json"]));
+        assert!(changed.touches(&["Cargo.toml", "*.csproj"]));
+        assert!(!changed.touches(&["Cargo.toml", "pyproject.toml"]));
+        assert!(!changed.touches(&["*.sln"]));
+        assert!(!event(&[]).touches(&["package.json"]));
+    }
+
+    #[gpui::test]
+    fn a_changed_manifest_is_announced(cx: &mut TestAppContext) {
+        cx.executor().allow_parking();
+        let folder = tempfile::tempdir().unwrap();
+        let root = folder.path().canonicalize().unwrap();
+        let model = cx.new(|_| Workspace::empty());
+        let seen = Rc::new(RefCell::new(false));
+        let _subscription = cx.update(|cx| {
+            let seen = seen.clone();
+            cx.subscribe(&model, move |_, event: &WorkspaceEvent, _| {
+                if event.touches(&["package.json"]) {
+                    *seen.borrow_mut() = true;
+                }
+            })
+        });
+        model.update(cx, |workspace, cx| {
+            workspace.set_root(Some(root.clone()), cx)
+        });
+        cx.run_until_parked();
+
+        std::fs::write(root.join("package.json"), "{}").unwrap();
+        let deadline = Instant::now() + Duration::from_secs(20);
+        while !*seen.borrow() {
+            assert!(Instant::now() < deadline, "no event for package.json");
+            std::thread::sleep(Duration::from_millis(50));
+            cx.run_until_parked();
+        }
     }
 }

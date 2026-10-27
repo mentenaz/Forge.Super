@@ -6,10 +6,11 @@
 //!   panel buttons and the notification bell.
 //!
 //! The items themselves are in `status_items.rs`. Right-clicking a panel
-//! button moves that panel to another dock.
+//! button moves that panel to another dock or hides the button
+//! (`panels.<id>.button` in `settings.json`).
 
 use gpui::{
-    AnyElement, Context, InteractiveElement, IntoElement, ParentElement, Styled, Window, div,
+    AnyElement, App, Context, InteractiveElement, IntoElement, ParentElement, Styled, Window, div,
 };
 use gpui_component::{
     ActiveTheme, Selectable, Sizable,
@@ -20,7 +21,13 @@ use gpui_component::{
 };
 
 use super::ForgeShell;
-use forge_host::DockPosition;
+use forge_host::{DockPosition, NoticeKind, Settings};
+
+/// Whether the panel's status-bar button is shown (`panels.<id>.button`,
+/// on unless the settings turn it off).
+fn panel_button_shown(id: &str, cx: &App) -> bool {
+    Settings::panel::<bool>(id, "button", cx).unwrap_or(true)
+}
 
 impl ForgeShell {
     pub(super) fn render_status_bar(&self, window: &Window, cx: &mut Context<Self>) -> StatusBar {
@@ -80,6 +87,9 @@ impl ForgeShell {
         let ids: Vec<&'static str> = self.panels_in(position).map(|p| p.info.id).collect();
         let mut buttons = Vec::with_capacity(ids.len() + 1);
         for id in ids {
+            if !panel_button_shown(id, cx) {
+                continue;
+            }
             // Demo is a dev aid, kept visually apart from the product panels.
             if id == "demo" {
                 buttons.push(Separator::vertical().into_any_element());
@@ -121,7 +131,27 @@ impl ForgeShell {
                             }),
                     );
                 }
-                menu
+                menu.separator().item(PopupMenuItem::new("Hide button").on_click({
+                    let this = this.clone();
+                    move |_, window, cx| {
+                        // Settings are read at start-up: to bring the button
+                        // back, set `panels.<id>.button` to true.
+                        let _ = Settings::set_panel(id, "button", false, cx);
+                        this.update(cx, |this, cx| {
+                            this.notify(
+                                NoticeKind::Info,
+                                format!("{title} button hidden"),
+                                format!(
+                                    "Set \"panels.{id}.button\" to true in settings.json to show it again."
+                                ),
+                                window,
+                                cx,
+                            );
+                            cx.notify();
+                        })
+                        .ok();
+                    }
+                }))
             })
             .into_any_element()
     }

@@ -9,6 +9,7 @@
 //! - [`workspace`]: the workspace model: root, folder listings and git,
 //!   kept current by a file watcher.
 //! - [`settings`] / [`state`]: `settings.json` and `state.json`.
+//! - [`tab_kind`]: tabs that are reopened at the next start.
 //!
 //! The shell calls [`init`] once at startup, before any panel registers.
 
@@ -16,7 +17,7 @@ pub mod host;
 pub mod panel;
 pub mod settings;
 pub mod state;
-mod store;
+pub mod tab_kind;
 pub mod workspace;
 
 pub use host::{
@@ -26,7 +27,10 @@ pub use host::{
 pub use panel::{BuildView, DockPosition, PanelInfo, PanelRegistry, register_panel};
 pub use settings::Settings;
 pub use state::State;
-pub use workspace::{DirEntry, FileState, FileStatus, GitError, GitState, Workspace, Worktree};
+pub use tab_kind::{RestoreTab, TabRestore, register_tab_kind, restore_tab};
+pub use workspace::{
+    DirEntry, FileState, FileStatus, GitError, GitState, Workspace, WorkspaceEvent, Worktree,
+};
 
 use gpui::App;
 

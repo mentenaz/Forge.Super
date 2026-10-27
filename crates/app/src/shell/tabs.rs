@@ -6,6 +6,8 @@
 use gpui::{AnyView, Context, SharedString, Window};
 use gpui_component::Icon;
 
+use forge_host::TabRestore;
+
 use super::ForgeShell;
 
 /// Builds a fresh view for a tab — kept on the tab so "Duplicate in Split
@@ -30,6 +32,8 @@ pub(super) struct WorkspaceTab {
     pub(super) symbol: Option<SharedString>,
     pub(super) dirty: bool,
     pub(super) pinned: bool,
+    /// How the tab is reopened after a restart, if it can be.
+    pub(super) restore: Option<TabRestore>,
     pub(super) build: BuildTabView,
     pub(super) view: AnyView,
 }
@@ -62,7 +66,10 @@ impl ForgeShell {
         }
     }
 
-    fn group_mut(&mut self, group: TabGroup) -> (&mut Vec<WorkspaceTab>, &mut Option<usize>) {
+    pub(super) fn group_mut(
+        &mut self,
+        group: TabGroup,
+    ) -> (&mut Vec<WorkspaceTab>, &mut Option<usize>) {
         match group {
             TabGroup::Primary => (&mut self.tabs, &mut self.active_tab),
             TabGroup::Split => (&mut self.split_tabs, &mut self.split_active_tab),
@@ -106,7 +113,7 @@ impl ForgeShell {
     /// Keeps the groups in shape after any change: pinned tabs first, an
     /// empty primary pane takes over the split's tabs, and the active pane
     /// always exists.
-    fn normalize_groups(&mut self) {
+    pub(super) fn normalize_groups(&mut self) {
         for group in [TabGroup::Primary, TabGroup::Split] {
             let (tabs, active) = self.group_mut(group);
             let active_id = active.and_then(|idx| tabs.get(idx)).map(|t| t.id);
@@ -144,6 +151,7 @@ impl ForgeShell {
             symbol: spec.symbol,
             dirty: spec.dirty,
             pinned: false,
+            restore: spec.restore,
             build: spec.build,
             view,
         };

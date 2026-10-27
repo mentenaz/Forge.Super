@@ -11,7 +11,7 @@ use std::time::Duration;
 use gpui::{App, Global};
 use serde::{Serialize, de::DeserializeOwned};
 
-use crate::store::JsonStore;
+use forge_store::JsonStore;
 
 const SAVE_DELAY: Duration = Duration::from_millis(500);
 

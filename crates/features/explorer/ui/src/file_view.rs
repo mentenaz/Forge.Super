@@ -5,7 +5,7 @@
 use std::path::{Path, PathBuf};
 use std::rc::Rc;
 
-use forge_host::{Host, TabRequest, Workspace};
+use forge_host::{Host, TabRequest, TabRestore, Workspace};
 use gpui::{
     App, AppContext, Context, Entity, IntoElement, ParentElement, Render, SharedString, Styled,
     Window, div,
@@ -19,6 +19,23 @@ use gpui_component::{
 /// Opens `path` (absolute) read-only in a tab. Registered as the host's file
 /// opener, so the Git panel and others open files the same way.
 pub fn open_file_tab(path: PathBuf, window: &mut Window, cx: &mut App) {
+    Host::open_tab(file_tab(path, cx), window, cx);
+}
+
+/// The tab kind file tabs are saved and reopened as.
+pub(crate) const FILE_TAB_KIND: &str = "file";
+
+/// Reopens a saved file tab; `None` when the file is gone.
+pub(crate) fn restore_file_tab(
+    payload: &serde_json::Value,
+    _: &mut Window,
+    cx: &mut App,
+) -> Option<TabRequest> {
+    let path = PathBuf::from(payload.as_str()?);
+    path.is_file().then(|| file_tab(path, cx))
+}
+
+fn file_tab(path: PathBuf, cx: &App) -> TabRequest {
     let title: SharedString = path
         .file_name()
         .map(|n| n.to_string_lossy().into_owned())
@@ -34,7 +51,7 @@ pub fn open_file_tab(path: PathBuf, window: &mut Window, cx: &mut App) {
                 .join("/"),
         )
     });
-    let tab = TabRequest {
+    TabRequest {
         key: path.to_string_lossy().into_owned().into(),
         title,
         icon: Icon::new(IconName::File),
@@ -44,12 +61,12 @@ pub fn open_file_tab(path: PathBuf, window: &mut Window, cx: &mut App) {
         ),
         symbol: None,
         dirty: false,
+        restore: Some(TabRestore::new(FILE_TAB_KIND, &path)),
         build: Rc::new(move |window, cx| {
             let path = path.clone();
             cx.new(|cx| FileView::new(path, window, cx)).into()
         }),
-    };
-    Host::open_tab(tab, window, cx);
+    }
 }
 
 /// Larger files aren't opened (the view keeps the whole text in memory).

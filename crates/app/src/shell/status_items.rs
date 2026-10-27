@@ -63,6 +63,7 @@ impl ForgeShell {
             path: None,
             symbol: None,
             dirty: false,
+            restore: None,
             build,
         };
         self.open_tab(spec, window, cx);

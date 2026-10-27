@@ -13,6 +13,7 @@ mod status_bar;
 mod status_items;
 mod tab_bar;
 mod tab_context_menu;
+mod tab_restore;
 mod tab_switcher;
 mod tabs;
 mod theme;

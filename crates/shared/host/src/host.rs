@@ -9,6 +9,7 @@ use gpui::{App, Global, SharedString, Task, Window};
 use gpui_component::Icon;
 
 use crate::panel::BuildView;
+use crate::tab_kind::TabRestore;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum NoticeKind {
@@ -31,6 +32,9 @@ pub struct TabRequest {
     /// Breadcrumb symbol, until the editor provides it.
     pub symbol: Option<SharedString>,
     pub dirty: bool,
+    /// How to reopen the tab after a restart; `None` for a tab that isn't
+    /// reopened.
+    pub restore: Option<TabRestore>,
     pub build: BuildView,
 }
 

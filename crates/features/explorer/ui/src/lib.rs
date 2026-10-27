@@ -12,7 +12,7 @@ mod panel;
 pub use file_view::{FileView, open_file_tab};
 pub use panel::ExplorerPanel;
 
-use forge_host::{DockPosition, Host, PanelInfo, register_panel};
+use forge_host::{DockPosition, Host, PanelInfo, register_panel, register_tab_kind};
 use gpui::{App, AppContext};
 use gpui_component::Icon;
 
@@ -29,4 +29,5 @@ pub fn init(cx: &mut App) {
     };
     register_panel(cx, info, |_, cx| cx.new(ExplorerPanel::new).into());
     Host::set_file_opener(open_file_tab, cx);
+    register_tab_kind(cx, file_view::FILE_TAB_KIND, file_view::restore_file_tab);
 }

@@ -12,6 +12,8 @@ gpui-component-assets.workspace = true
 rust-embed.workspace = true
 gpui_platform.workspace = true
 log.workspace = true
+serde.workspace = true
+serde_json.workspace = true
 forge-git-credential.workspace = true
 forge-host.workspace = true
 explorer-ui.workspace = true
@@ -19,7 +21,9 @@ git-ui.workspace = true
 script-runner-ui.workspace = true
 node-ui.workspace = true
 dotnet-ui.workspace = true
+python-ui.workspace = true
 
 [dev-dependencies]
+gpui = { workspace = true, features = ["test-support"] }
 forge-ide-env.workspace = true
 tempfile.workspace = true

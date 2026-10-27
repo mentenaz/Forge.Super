@@ -124,6 +124,7 @@ fn panel_tab(id: PanelId, title: &'static str, icon: Icon) -> TabRequest {
         path: None,
         symbol: None,
         dirty: false,
+        restore: None,
         build: Rc::new(move |_, cx| {
             cx.new(|_| PlaceholderView {
                 title: title.into(),

@@ -1,6 +1,7 @@
-//! A JSON file read once at startup and written back on change, shared by
-//! [`crate::Settings`] and [`crate::State`]. Keys are dotted paths into the
-//! document, e.g. `panels.cockpit.dock`.
+//! A JSON file read once at startup and written back on change. `Settings`
+//! and `State` in `forge-host` sit on it, and any `core` crate can use it
+//! without gpui. Keys are dotted paths into the document, e.g.
+//! `panels.cockpit.dock`.
 //!
 //! A missing file is an empty document. An unreadable or invalid file is
 //! also treated as empty, with the error kept for the shell to report, and
@@ -11,14 +12,14 @@ use std::path::{Path, PathBuf};
 use serde::{Serialize, de::DeserializeOwned};
 use serde_json::{Map, Value};
 
-pub(crate) struct JsonStore {
+pub struct JsonStore {
     path: PathBuf,
     value: Value,
     load_error: Option<String>,
 }
 
 impl JsonStore {
-    pub(crate) fn load(path: PathBuf) -> Self {
+    pub fn load(path: PathBuf) -> Self {
         let (value, load_error) = match std::fs::read_to_string(&path) {
             Err(err) if err.kind() == std::io::ErrorKind::NotFound => {
                 (Value::Object(Map::new()), None)
@@ -46,16 +47,26 @@ impl JsonStore {
         }
     }
 
-    pub(crate) fn path(&self) -> &Path {
+    /// A store that is never read from or written to disk, for values kept
+    /// only while the program runs (defaults).
+    pub fn in_memory() -> Self {
+        Self {
+            path: PathBuf::new(),
+            value: Value::Object(Map::new()),
+            load_error: None,
+        }
+    }
+
+    pub fn path(&self) -> &Path {
         &self.path
     }
 
-    pub(crate) fn load_error(&self) -> Option<&str> {
+    pub fn load_error(&self) -> Option<&str> {
         self.load_error.as_deref()
     }
 
     /// The value at `key`, if present and of the right type.
-    pub(crate) fn get<T: DeserializeOwned>(&self, key: &str) -> Option<T> {
+    pub fn get<T: DeserializeOwned>(&self, key: &str) -> Option<T> {
         let mut node = &self.value;
         for part in key.split('.') {
             node = node.get(part)?;
@@ -65,7 +76,7 @@ impl JsonStore {
 
     /// Sets `key`, creating intermediate objects (and replacing non-objects
     /// in the way).
-    pub(crate) fn set(&mut self, key: &str, value: impl Serialize) {
+    pub fn set(&mut self, key: &str, value: impl Serialize) {
         let Ok(value) = serde_json::to_value(value) else {
             return;
         };
@@ -88,7 +99,7 @@ impl JsonStore {
 
     /// Writes the document, pretty-printed. On the first write after a
     /// failed load, the bad file is kept as `<name>.invalid.json`.
-    pub(crate) fn save(&mut self) -> std::io::Result<()> {
+    pub fn save(&mut self) -> std::io::Result<()> {
         if let Some(parent) = self.path.parent() {
             std::fs::create_dir_all(parent)?;
         }
@@ -106,7 +117,7 @@ mod tests {
 
     fn temp_file(name: &str) -> PathBuf {
         let dir =
-            std::env::temp_dir().join(format!("forge-host-test-{}-{name}", std::process::id()));
+            std::env::temp_dir().join(format!("forge-store-test-{}-{name}", std::process::id()));
         let _ = std::fs::remove_dir_all(&dir);
         dir.join("store.json")
     }
@@ -141,6 +152,14 @@ mod tests {
             None,
             "wrong type reads as missing"
         );
+    }
+
+    #[test]
+    fn in_memory_store_holds_values() {
+        let mut store = JsonStore::in_memory();
+        store.set("a.b", 3);
+        assert_eq!(store.get::<u32>("a.b"), Some(3));
+        assert!(store.load_error().is_none());
     }
 
     #[test]

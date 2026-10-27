@@ -8,3 +8,10 @@ publish = false
 
 [dependencies]
 branding.workspace = true
+log.workspace = true
+
+[target.'cfg(windows)'.dependencies]
+windows-registry.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true
